@@ -436,8 +436,12 @@
                 container.innerHTML='';
                 appts.forEach(a=>{
                     const dtFormatted = formatApptDate(a.date);
-                    const badge = a._isCancelled ? {cls:'bg-gray-200 text-gray-600', text:'Cancelled'} : (a._isCompleted ? {cls:'bg-gray-200 text-gray-600', text:'Completed'} : {cls:'bg-green-100 text-green-700', text:'Scheduled'});
-                    const cardClass = (a._isCancelled || a._isCompleted) ? 'opacity-60' : '';
+                    const badge = a._isCancelled
+                        ? {cls:'bg-gray-200 text-gray-600', text:'Cancelled'}
+                        : (a._isCompleted
+                            ? {cls:'bg-green-100 text-green-700 font-medium', text:'Completed'}
+                            : {cls:'bg-blue-100 text-blue-700 font-medium', text:'Scheduled'});
+                    const cardClass = a._isCancelled ? 'opacity-60' : '';
                     const ratingSnippet = a.has_review && a.user_rating ? `<div class='mt-2 flex items-center text-xs text-yellow-600'>${'★'.repeat(Math.round(a.user_rating))}<span class='ml-1 text-gray-500'>(${a.user_rating.toFixed(0)})</span></div>` : '';
                           // Always allow rating/editing for completed non-cancelled appointments
                           const showRateBtn = a._isCompleted && !a._isCancelled; // previously hid when already rated
@@ -595,7 +599,7 @@
                 closeRateModal();
                 // Refresh appointments so the button can be removed or disabled
                 await fetchAppointments();
-                showToast('Rating submitted');
+                showToast('Rating left successfully');
             } catch(err){
                 console.error(err);
                 alert('Network error submitting rating');
@@ -608,6 +612,9 @@
             if(!el){ return alert(msg); }
             el.textContent = msg;
             el.classList.remove('hidden');
+            // Ensure green styling
+            el.classList.remove('bg-red-500','bg-blue-500');
+            el.classList.add('bg-green-500');
             setTimeout(() => {
                 el.classList.remove('opacity-0');
                 el.classList.add('opacity-100');
