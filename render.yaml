@@ -3,9 +3,11 @@ services:
     name: medbook
     env: python
     plan: free
-    rootDir: Medbook
-    buildCommand: pip install -r ../requirements.txt || pip install -r requirements.txt
-    startCommand: python -m waitress --listen=0.0.0.0:$PORT table:app
+    # Use repo root so both top-level helper files (schema.sql, seed_data.py) and package are present.
+    rootDir: .
+    buildCommand: pip install -r requirements.txt
+    # Explicitly reference the fully qualified module path to the Flask app.
+    startCommand: python -m waitress --listen=0.0.0.0:$PORT Medbook.table:app
     envVars:
       - key: DATABASE_URL
         sync: false
