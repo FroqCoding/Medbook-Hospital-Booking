@@ -17,9 +17,12 @@
         .form-step {
             display: none;
         }
-        .form-step.active {
-            display: block;
-        }
+        .form-step.active { display:block; }
+        #stepsContainer { position: relative; transition: height .4s ease; }
+        .form-step { animation: fadeSlide .35s ease; }
+        @keyframes fadeSlide { from { opacity:0; transform: translateY(6px);} to { opacity:1; transform: translateY(0);} }
+        .step-connector { background:#e5e7eb !important; }
+        .step-connector .connector-fill { background:#3b82f6; }
         /* Progress animation refinements */
         .step-circle { transition: background-color .35s ease, transform .35s ease; }
         .step-circle.active-step { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
@@ -65,7 +68,7 @@
 
     <!-- Sign Up Form -->
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 flex-grow">
-        <div class="bg-white shadow rounded-lg p-6">
+    <div class="bg-white shadow rounded-lg p-6 w-full max-w-[510px] mx-auto">
             <!-- Progress Bar -->
             <div class="mb-8" id="progressWrapper">
                 <div class="flex justify-between items-center" id="progressBar">
@@ -97,6 +100,7 @@
             </div>
 
             <form id="doctorSignupForm">
+                <div id="stepsContainer">
                 <!-- Step 1: Personal Information -->
                 <div class="form-step active" id="step1">
                     <h2 class="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
@@ -239,6 +243,7 @@
                         </button>
                     </div>
                 </div>
+                </div>
             </form>
         </div>
     </div>
@@ -301,22 +306,32 @@
             });
         }
 
-        function nextStep(currentStep) {
-            document.getElementById('step' + currentStep).classList.remove('active');
-            const next = currentStep + 1;
-            document.getElementById('step' + next).classList.add('active');
-            updateProgress(next);
+        function animateToStep(targetStep) {
+            const container = document.getElementById('stepsContainer');
+            const currentEl = container.querySelector('.form-step.active');
+            const prevHeight = currentEl ? currentEl.offsetHeight : container.offsetHeight;
+            if (currentEl) currentEl.classList.remove('active');
+            const targetEl = document.getElementById('step'+targetStep);
+            // Temporarily make sure container has explicit previous height
+            container.style.height = prevHeight + 'px';
+            targetEl.classList.add('active');
+            const newHeight = targetEl.offsetHeight;
+            requestAnimationFrame(()=> { container.style.height = newHeight + 'px'; });
+            updateProgress(targetStep);
         }
 
-        function prevStep(currentStep) {
-            document.getElementById('step' + currentStep).classList.remove('active');
-            const prev = currentStep - 1;
-            document.getElementById('step' + prev).classList.add('active');
-            updateProgress(prev);
-        }
+        function nextStep(currentStep) { animateToStep(currentStep + 1); }
+        function prevStep(currentStep) { animateToStep(currentStep - 1); }
 
         // initial
+        const initContainer = document.getElementById('stepsContainer');
+        const initActive = document.querySelector('.form-step.active');
+        if (initActive) { initContainer.style.height = initActive.offsetHeight + 'px'; }
         updateProgress(1);
+        window.addEventListener('resize', ()=> {
+            const active = document.querySelector('.form-step.active');
+            if (active) document.getElementById('stepsContainer').style.height = active.offsetHeight + 'px';
+        });
 
         document.getElementById('doctorSignupForm').addEventListener('submit', function(e) {
             e.preventDefault();
