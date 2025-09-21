@@ -384,7 +384,7 @@
             }
         });
 
-        console.log('[profile] Script version 2025-09-21/debug2 starting');
+    console.log('[profile] Script version 2025-09-22/debug3 starting');
         async function fetchAppointments(){
             console.log('[profile] fetchAppointments invoked');
             if(!userId) return;            
@@ -493,19 +493,27 @@
             document.getElementById('rateDoctorMeta').textContent = `${doctorName} • ${speciality}`;
             document.getElementById('rateComment').value='';
             currentStarValue = 0;
-            // Ensure modal visible before we attempt to focus stars
             const modal = document.getElementById('rateModal');
             if(modal){
                 modal.classList.remove('hidden');
                 modal.setAttribute('aria-hidden','false');
             }
-            renderStars();
+            // Defer star render so modal paints first
+            requestAnimationFrame(()=>{
+                renderStars();
+                setTimeout(()=>{
+                    if(!document.querySelector('#starContainer button')){
+                        console.warn('[profile] starContainer empty after first render, retrying');
+                        renderStars();
+                    }
+                },50);
+            });
             const submitBtn = document.getElementById('submitRateBtn');
             if(submitBtn) submitBtn.disabled = true;
             setTimeout(()=>{
                 const firstStar = document.querySelector('#starContainer button');
                 if(firstStar) firstStar.focus();
-            }, 30);
+            }, 120);
         }
 
         // Rating stars logic (dynamic container lookup to avoid null capture before DOM exists)
@@ -513,7 +521,12 @@
         function getStarContainer(){ return document.getElementById('starContainer'); }
         function renderStars(){
             const sc = getStarContainer();
-            if(!sc){ console.warn('[profile] starContainer not found at render time'); return; }
+            if(!sc){
+                console.error('[profile] starContainer not found at render time');
+                const submit = document.getElementById('submitRateBtn');
+                if(submit) submit.disabled = true;
+                return;
+            }
             sc.innerHTML='';
             for(let i=1;i<=5;i++){
                 const btn = document.createElement('button');
