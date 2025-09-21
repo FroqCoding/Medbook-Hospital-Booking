@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .appointment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .time-slot:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="doctors.html" class="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium">Doctors</a>
+                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center">
+                <h1 class="text-2xl font-bold text-gray-900">Doctor Profile</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="flex-grow"> <!-- added wrapper to push footer down -->
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300">
+                    <div class="p-6">
+                        <div class="flex flex-col items-center">
+                            <img class="h-32 w-32 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Doctor" />
+                            <h3 class="mt-4 text-xl font-medium text-gray-900" data-doc-name>Doctor</h3>
+                            <p class="text-sm text-blue-500" data-doc-speciality>Speciality</p>
+                            <div class="flex text-yellow-400 mt-1">
+                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
+                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
+                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
+                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
+                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
+                                <span class="text-gray-500 text-xs ml-1">(48 reviews)</span>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <h4 class="text-sm font-medium text-gray-900">Contact Information</h4>
+                            <div class="mt-2 space-y-2">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i data-feather="mail" class="flex-shrink-0 mr-2 h-4 w-4 text-gray-400"></i>
+                                    <span id="docEmail">N/A</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i data-feather="phone" class="flex-shrink-0 mr-2 h-4 w-4 text-gray-400"></i>
+                                    <span id="docPhone">N/A</span>
+                                </div>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i data-feather="map-pin" class="flex-shrink-0 mr-2 h-4 w-4 text-gray-400"></i>
+                                    <span data-doc-hospital>Hospital</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <a href="booking.html" id="bookFromProfile" class="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700">
+                                Book Appointment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Details & Reviews -->
+            <div class="lg:col-span-2">
+                <!-- Profile Details -->
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Professional Information</h3>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-name>Doctor</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Specialty</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-speciality>Speciality</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Years of Experience</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-exp>N/A</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Medical License</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-license>N/A</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Hospital Affiliation</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-hospital>Hospital</dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Languages</dt>
+                                <dd class="mt-1 text-sm text-gray-900" data-doc-languages>N/A</dd>
+                            </div>
+                        </dl>
+                        <div class="mt-6">
+                            <h4 class="text-sm font-medium text-gray-900">Biography</h4>
+                            <p class="mt-2 text-sm text-gray-500" data-doc-bio>N/A</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 text-center text-gray-400 text-sm">&copy; 2025 MedBook.</div>
+    </footer>
+
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+
+        // Dynamic doctor profile population
+        const qs = new URLSearchParams(window.location.search);
+        const doctorId = qs.get('doctorid');
+        const profileState = { doctor: null };
+        async function loadDoctor(){
+            if(!doctorId){
+                document.body.insertAdjacentHTML('afterbegin', '<div class="bg-yellow-50 text-yellow-700 text-sm p-3 text-center">Missing doctor id.</div>');
+                return;
+            }
+            try{
+                const res = await fetch(`${window.location.origin}/doctors/${doctorId}`);
+                if(!res.ok){
+                    document.body.insertAdjacentHTML('afterbegin', '<div class="bg-red-50 text-red-600 text-sm p-3 text-center">Doctor not found.</div>');
+                    return;
+                }
+                const doc = await res.json();
+                profileState.doctor = doc;
+                populateProfile(doc);
+            }catch(e){
+                console.error(e);
+            }
+        }
+        function populateProfile(doc){
+            const nameEls = document.querySelectorAll('[data-doc-name]');
+            nameEls.forEach(el=> el.textContent = doc.name || 'N/A');
+            document.querySelectorAll('[data-doc-speciality]').forEach(el=> el.textContent = doc.speciality || 'N/A');
+            document.querySelectorAll('[data-doc-hospital]').forEach(el=> el.textContent = doc.hospital || 'N/A');
+            const emailEl = document.getElementById('docEmail'); if(emailEl) emailEl.textContent = doc.email || 'N/A';
+            const phoneEl = document.getElementById('docPhone'); if(phoneEl) phoneEl.textContent = doc.phone || 'N/A';
+            // No backend fields for these yet → N/A placeholders
+            document.querySelectorAll('[data-doc-exp]').forEach(el=> el.textContent = 'N/A');
+            document.querySelectorAll('[data-doc-license]').forEach(el=> el.textContent = 'N/A');
+            document.querySelectorAll('[data-doc-languages]').forEach(el=> el.textContent = 'N/A');
+            document.querySelectorAll('[data-doc-bio]').forEach(el=> el.textContent = 'N/A');
+            const availSummary = document.getElementById('availSummary'); if(availSummary) availSummary.textContent = doc.availability_summary || 'No availability listed';
+            const daysList = document.getElementById('availDaysList');
+            if(daysList && doc.availability_blocks){
+                daysList.innerHTML = doc.availability_blocks.map(b=>`<li class='text-xs text-gray-600'>${b.day} ${b.start} - ${b.end}</li>`).join('');
+            }
+            const bookBtn = document.getElementById('bookFromProfile');
+            if(bookBtn){
+                const params = new URLSearchParams({
+                    doctorid: doc.doctorid,
+                    name: encodeURIComponent(doc.name),
+                    speciality: encodeURIComponent(doc.speciality||''),
+                    hospital: encodeURIComponent(doc.hospital||'')
+                });
+                bookBtn.addEventListener('click', ()=>{ window.location.href = 'booking.html?' + params.toString(); });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadDoctor);
+    </script>
+</body>
+</html>

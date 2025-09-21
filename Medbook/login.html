@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .social-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center flex-shrink-0">
+                    <a href="index.html" class="flex items-center">
+                    <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                    <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                    </a>
+                </div>
+                <div class="flex-1 flex justify-center">
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                </div>
+                </div>
+                <div class="flex items-center" id="navUserAction">
+                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Content -->
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Sign in to your account
+            </h2>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                <!-- Social Login -->
+                <div class="space-y-4">
+                    <div>
+                        <button type="button" class="social-btn w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-150">
+                            <img class="h-5 w-5" src="https://www.google.com/favicon.ico" alt="Google">
+                            <span class="ml-2">Sign in with Google</span>
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="social-btn w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-150">
+                            <img class="h-5 w-5" src="https://www.apple.com/favicon.ico" alt="Apple">
+                            <span class="ml-2">Sign in with Apple</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login/Signup Forms -->
+                <form id="loginForm" class="mt-6 space-y-6" action="#" method="POST">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+                        <div class="mt-1">
+                            <input id="email" name="email" type="email" autocomplete="email" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <div class="mt-1">
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="remember-me" class="ml-2 block text-sm text-gray-700">Remember me</label>
+                        </div>
+
+                        <div class="text-sm">
+                            <a href="#" class="font-medium text-blue-500 hover:text-blue-700">Forgot your password?</a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Sign in
+                        </button>
+                    </div>
+                </form>
+
+                <form id="signupForm" class="mt-6 space-y-6 hidden" action="#" method="POST">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                            <div class="mt-1">
+                                <input id="firstName" name="firstName" type="text" autocomplete="given-name" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <div class="mt-1">
+                                <input id="lastName" name="lastName" type="text" autocomplete="family-name" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select id="gender" name="gender" required class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                            <input id="dob" name="dob" type="date" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="signupEmail" class="block text-sm font-medium text-gray-700">Email address</label>
+                        <div class="mt-1">
+                            <input id="signupEmail" name="email" type="email" autocomplete="email" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">Phone number</label>
+                        <div class="mt-1">
+                            <input id="phone" name="phone" type="tel" autocomplete="tel" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="signupPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                        <div class="mt-1">
+                            <input id="signupPassword" name="password" type="password" autocomplete="new-password" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">
+                                New to MedBook?
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <button id="toggleFormBtn" type="button" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Create your account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="successNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
+        Account created successfully. Proceed to log in.
+    </div>
+
+    <div id="errorNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 bg-opacity-90 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
+        Wrong credentials, Please try again
+    </div>
+
+    <script>
+        feather.replace();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleFormBtn');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            
+            toggleBtn.addEventListener('click', function() {
+                if (loginForm.classList.contains('hidden')) {
+                    // Switch to login form
+                    loginForm.classList.remove('hidden');
+                    signupForm.classList.add('hidden');
+                    toggleBtn.textContent = 'Create your account';
+                } else {
+                    // Switch to signup form
+                    loginForm.classList.add('hidden');
+                    signupForm.classList.remove('hidden');
+                    toggleBtn.textContent = 'Already have an account? Sign in';
+                }
+            });
+
+            // Profile icon logic for all pages
+            const navUserAction = document.getElementById('navUserAction');
+            if (navUserAction && localStorage.getItem('isLoggedIn') === 'true') {
+                navUserAction.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button id="profileBtn" class="flex items-center focus:outline-none">
+                            <img src="https://www.gravatar.com/avatar/?d=mp&s=32" alt="Profile" class="rounded-full h-8 w-8">
+                        </button>
+                        <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
+                    </div>
+                `;
+                document.getElementById('profileBtn').addEventListener('click', function() {
+                    window.location.href = 'profile.html';
+                });
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value,
+                email: document.getElementById('signupEmail').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('signupPassword').value,
+                gender: document.getElementById('gender').value,
+                date_of_birth: document.getElementById('dob').value
+            };
+            const res = await fetch(`${window.location.origin}/users/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                const notification = document.getElementById('successNotification');
+                notification.classList.remove('hidden');
+                setTimeout(() => {
+                    notification.classList.remove('opacity-0');
+                    notification.classList.add('opacity-100');
+                }, 10); // allow DOM to update
+
+                // Switch to login form
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('signupForm').classList.add('hidden');
+                document.getElementById('toggleFormBtn').textContent = 'Create your account';
+
+                // Hide notification after 3 seconds
+                setTimeout(() => {
+                    notification.classList.remove('opacity-100');
+                    notification.classList.add('opacity-0');
+                    setTimeout(() => {
+                        notification.classList.add('hidden');
+                    }, 300); // match your transition duration
+                }, 3000);
+            } else {
+                alert(result.message);
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const data = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            const res = await fetch(`${window.location.origin}/users/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userId', result.userid); // Save userId for profile page
+                window.location.href = 'index.html';
+            } else {
+                // Show red error notification
+                const errorNotification = document.getElementById('errorNotification');
+                errorNotification.classList.remove('hidden');
+                setTimeout(() => {
+                    errorNotification.classList.remove('opacity-0');
+                    errorNotification.classList.add('opacity-100');
+                }, 10);
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    errorNotification.classList.remove('opacity-100');
+                    errorNotification.classList.add('opacity-0');
+                    setTimeout(() => {
+                        errorNotification.classList.add('hidden');
+                    }, 300);
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

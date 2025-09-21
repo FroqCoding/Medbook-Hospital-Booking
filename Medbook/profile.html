@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .appointment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <script>
+      (function(){
+        // Simple auth guard
+        const isLogged = localStorage.getItem('isLoggedIn') === 'true';
+        if(!isLogged){
+          // Replace body with friendly message and redirect after delay
+          document.addEventListener('DOMContentLoaded', ()=>{
+            document.body.innerHTML = `<div class='min-h-screen flex items-center justify-center bg-gray-50 p-6'>
+              <div class='bg-white rounded-lg shadow p-8 max-w-md text-center'>
+                <h1 class='text-xl font-semibold text-gray-900 mb-2'>Authentication Required</h1>
+                <p class='text-sm text-gray-600 mb-6'>You must be logged in to view your profile. Redirecting you to the login page...</p>
+                <a href='login.html' class='inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium'>Go to Login</a>
+              </div>
+            </div>`;
+          });
+          setTimeout(()=>{ window.location.replace('login.html'); }, 2200);
+        }
+      })();
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center flex-shrink-0">
+                    <a href="index.html" class="flex items-center">
+                    <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                    <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                    </a>
+                </div>
+                <div class="flex-1 flex justify-center">
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                </div>
+                </div>
+                <div class="flex items-center" id="navUserAction">
+                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center">
+                <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content -->
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300">
+                    <div class="p-6">
+                        <div class="flex flex-col items-center">
+                            <img class="h-32 w-32 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Profile Picture">
+                            <h3 class="mt-4 text-xl font-medium text-gray-900 profile-name"></h3>
+                            <p class="text-sm text-blue-500 profile-email"></p>
+                            <p class="mt-1 text-sm text-gray-500 profile-phone"></p>
+                        </div>
+                        <div class="mt-6">
+                            <h4 class="text-sm font-medium text-gray-900">Health Information</h4>
+                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Age</p>
+                                    <p class="font-medium profile-age"></p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Gender</p>
+                                    <p class="font-medium profile-gender"></p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Date of Birth</p>
+                                    <p class="font-medium profile-dob"></p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Height</p>
+                                    <p class="font-medium profile-height"></p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Weight</p>
+                                    <p class="font-medium profile-weight"></p>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-gray-500">Blood Type</p>
+                                    <p class="font-medium"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button id="editProfileBtn" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Edit Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Details & Appointments -->
+            <div class="lg:col-span-2">
+                <!-- Profile Details -->
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Personal Information</h3>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6">
+                        <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                                <dd class="mt-1 text-sm text-gray-900 profile-name"></dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                                <dd class="mt-1 text-sm text-gray-900 profile-email"></dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Phone number</dt>
+                                <dd class="mt-1 text-sm text-gray-900 profile-phone"></dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Date of Birth</dt>
+                                <dd class="mt-1 text-sm text-gray-900 profile-dob"></dd>
+                            </div>
+                            <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Gender</dt>
+                                <dd class="mt-1 text-sm text-gray-900 profile-gender"></dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Upcoming Appointments -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Upcoming Appointments</h3>
+                        <button id="refreshAppointments" class="text-xs text-blue-500 hover:text-blue-700">Refresh</button>
+                    </div>
+                    <div id="appointmentsContainer" class="divide-y divide-gray-200">
+                        <div class="p-6 text-sm text-gray-500" id="noAppointmentsMsg">Loading appointments...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="fixed z-10 inset-0 overflow-y-auto hidden">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Edit Profile
+                            </h3>
+                            <div class="mt-2">
+                                <form class="space-y-4">
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label for="editFirstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                                            <input type="text" name="editFirstName" id="editFirstName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                        </div>
+                                        <div>
+                                            <label for="editLastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                                            <input type="text" name="editLastName" id="editLastName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="editEmail" class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input type="email" name="editEmail" id="editEmail" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                    </div>
+                                    <div>
+                                        <label for="editPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                        <input type="tel" name="editPhone" id="editPhone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                        <div>
+                                            <label for="editDob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                                            <input type="date" name="editDob" id="editDob" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                        </div>
+                                        <div>
+                                            <label for="editGender" class="block text-sm font-medium text-gray-700">Gender</label>
+                                            <select name="editGender" id="editGender" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                                <option value="">Select</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="editHeight" class="block text-sm font-medium text-gray-700">Height (cm)</label>
+                                            <input type="number" name="editHeight" id="editHeight" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                        </div>
+                                        <div>
+                                            <label for="editWeight" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                                            <input type="number" name="editWeight" id="editWeight" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" id="saveProfileBtn">
+                        Save Changes
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" id="cancelEditBtn">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Notification -->
+    <div id="successNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
+        Changes saved successfully.
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 mt-12">
+      <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-base text-gray-400">&copy; 2025 MedBook. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+
+        // Navbar profile/login/logout logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const navUserAction = document.getElementById('navUserAction');
+            if (navUserAction && localStorage.getItem('isLoggedIn') === 'true') {
+                navUserAction.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button id="profileBtn" class="flex items-center focus:outline-none">
+                            <img src="https://www.gravatar.com/avatar/?d=mp&s=32" alt="Profile" class="rounded-full h-8 w-8">
+                        </button>
+                        <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
+                    </div>
+                `;
+                document.getElementById('profileBtn').addEventListener('click', function() {
+                    window.location.href = 'profile.html';
+                });
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+
+        // --- Profile Page Functionality ---
+        // Assume userId is stored in localStorage after login
+        const apiBase = window.location.origin;
+        const userId = localStorage.getItem('userId');
+        async function fetchProfile() {
+            if (!userId) return;
+            const res = await fetch(`${window.location.origin}/users/${userId}`);
+            if (!res.ok) return;
+            const user = await res.json();
+            // Fill profile info
+            document.querySelectorAll('.profile-name').forEach(e => e.textContent = user.name || '');
+            document.querySelectorAll('.profile-email').forEach(e => e.textContent = user.email || '');
+            document.querySelectorAll('.profile-phone').forEach(e => e.textContent = user.phone || '');
+            document.querySelectorAll('.profile-age').forEach(e => e.textContent = user.age ?? '');
+            document.querySelectorAll('.profile-height').forEach(e => e.textContent = user.height ?? '');
+            document.querySelectorAll('.profile-weight').forEach(e => e.textContent = user.weight ?? '');
+            document.querySelectorAll('.profile-gender').forEach(e => e.textContent = user.gender || '');
+            document.querySelectorAll('.profile-dob').forEach(e => e.textContent = user.date_of_birth || '');
+            // Split name
+            const [firstName, ...lastNameArr] = (user.name || '').split(' ');
+            document.getElementById('editFirstName').value = firstName || '';
+            document.getElementById('editLastName').value = lastNameArr.join(' ') || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editPhone').value = user.phone || '';
+            document.getElementById('editDob').value = user.date_of_birth || '';
+            document.getElementById('editGender').value = user.gender || '';
+            document.getElementById('editHeight').value = user.height ?? '';
+            document.getElementById('editWeight').value = user.weight ?? '';
+        }
+        fetchProfile();
+
+        // Edit Profile Modal Functionality
+        document.getElementById('editProfileBtn').addEventListener('click', function() {
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        });
+        document.getElementById('cancelEditBtn').addEventListener('click', function() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        });
+        document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+            // Save to backend
+            const updated = {
+                name: document.getElementById('editFirstName').value + ' ' + document.getElementById('editLastName').value,
+                email: document.getElementById('editEmail').value,
+                phone: document.getElementById('editPhone').value,
+                height: document.getElementById('editHeight').value,
+                weight: document.getElementById('editWeight').value,
+                date_of_birth: document.getElementById('editDob').value,
+                gender: document.getElementById('editGender').value
+            };
+            const res = await fetch(`https://f7b2ff688d32.ngrok-free.app/users/${userId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(updated)
+            });
+            if (res.ok) {
+                document.getElementById('editProfileModal').classList.add('hidden');
+                await fetchProfile();
+                // Show green notification
+                const notification = document.getElementById('successNotification');
+                notification.classList.remove('hidden');
+                setTimeout(() => {
+                    notification.classList.remove('opacity-0');
+                    notification.classList.add('opacity-100');
+                }, 10);
+                setTimeout(() => {
+                    notification.classList.remove('opacity-100');
+                    notification.classList.add('opacity-0');
+                    setTimeout(() => {
+                        notification.classList.add('hidden');
+                    }, 300);
+                }, 3000);
+            } else {
+                alert('Failed to update profile.');
+            }
+        });
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('editProfileModal');
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        async function fetchAppointments(){
+            if(!userId) return;            
+            const container = document.getElementById('appointmentsContainer');
+            const emptyMsg = document.getElementById('noAppointmentsMsg');
+            emptyMsg.textContent='Loading appointments...';
+            try {
+                const res = await fetch(`${apiBase}/users/${userId}/appointments`);
+                if(!res.ok){ emptyMsg.textContent='Failed to load appointments.'; return; }
+                let appts = await res.json();
+                if(!appts.length){ emptyMsg.textContent='No upcoming appointments'; return; }
+                // Determine completed (past date) and keep cancelled separate
+                const today = new Date(); today.setHours(0,0,0,0);
+                appts = appts.map(a=>{
+                    const ad = new Date(a.date); ad.setHours(0,0,0,0);
+                    a._isCancelled = (a.status === false || a.status === 0);
+                    a._isCompleted = !a._isCancelled && ad < today; // only completed if it was never cancelled
+                    return a;
+                });
+                // Sort: upcoming scheduled (soonest first), then completed (recent first), then cancelled (recent first)
+                appts.sort((a,b)=>{
+                    // priority weight
+                    function weight(x){ if(!x._isCancelled && !x._isCompleted) return 0; if(x._isCompleted) return 1; return 2; }
+                    const wa = weight(a), wb = weight(b);
+                    if(wa !== wb) return wa - wb;
+                    // within same bucket: by date ascending for upcoming, descending for others
+                    const da = new Date(a.date).getTime();
+                    const db = new Date(b.date).getTime();
+                    if(wa === 0){ return da - db; } else { return db - da; }
+                });
+                container.innerHTML='';
+                appts.forEach(a=>{
+                    const dtFormatted = formatApptDate(a.date);
+                    const badge = a._isCancelled ? {cls:'bg-gray-200 text-gray-600', text:'Cancelled'} : (a._isCompleted ? {cls:'bg-gray-200 text-gray-600', text:'Completed'} : {cls:'bg-green-100 text-green-700', text:'Scheduled'});
+                    const cardClass = (a._isCancelled || a._isCompleted) ? 'opacity-60' : '';
+                    container.innerHTML += `
+                        <div class=\"px-4 py-5 sm:px-6 appointment-card transition-all duration-300 ${cardClass}\">\n                    <div class=\"flex items-center justify-between\">\n                        <div class=\"flex items-center\">\n                            <img class=\"h-10 w-10 rounded-full object-cover\" src=\"https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg\" alt=\"Doctor\">\n                            <div class=\"ml-4\">\n                                <h4 class=\"text-sm font-medium text-gray-900\">${escapeHtml(a.doctor_name)}</h4>\n                                <p class=\"text-sm text-gray-500\">${escapeHtml(a.speciality)}</p>\n                            </div>\n                        </div>\n                        <div class=\"text-right\">\n                            <p class=\"text-sm font-medium text-gray-900\">${dtFormatted}</p>\n                            <p class=\"text-sm text-gray-500\">${a.time}</p>\n                            <span class=\"inline-block mt-1 text-xs px-2 py-1 rounded ${badge.cls}\">${badge.text}</span>\n                        </div>\n                    </div>\n                    <div class=\"mt-4 flex items-center text-sm text-gray-500\">\n                        <i data-feather=\"map-pin\" class=\"flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400\"></i>\n                        ${escapeHtml(a.hospital)}\n                    </div>\n                    ${a.reason ? `<div class='mt-2 text-xs text-gray-500'>Reason: ${escapeHtml(a.reason)}</div>`: ''}\n                    <div class=\"mt-3 flex justify-end\">${(!a._isCancelled && !a._isCompleted) ? `<button data-id=\"${a.appointmentid}\" class=\"cancel-btn bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded\">Cancel Appointment</button>` : ''}</div>\n                </div>`;
+                });
+                feather.replace();
+                document.querySelectorAll('.cancel-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.getAttribute('data-id');
+                        openCancelModal(id);
+                    });
+                });
+            } catch(e){ console.error(e); emptyMsg.textContent='Error loading appointments.'; }
+        }
+
+        function formatApptDate(d){ try { return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});} catch { return d; } }
+        function escapeHtml(str){ return str.replace(/[&<>"]+/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+        document.getElementById('refreshAppointments').addEventListener('click', fetchAppointments);
+        // Fetch appointments after profile data
+        fetchAppointments();
+
+        // Modal logic for cancelling appointments
+        let pendingCancelId = null;
+        function openCancelModal(id){
+            pendingCancelId = id;
+            document.getElementById('cancelModal').classList.remove('hidden');
+        }
+        function closeCancelModal(){
+            pendingCancelId = null;
+            document.getElementById('cancelModal').classList.add('hidden');
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const backBtn = document.getElementById('backCancelBtn');
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            if(backBtn){ backBtn.addEventListener('click', closeCancelModal); }
+            if(confirmBtn){
+                confirmBtn.addEventListener('click', async () => {
+                    if(!pendingCancelId) return;
+                    try {
+                        const res = await fetch(`${apiBase}/appointments/${pendingCancelId}/cancel`, { method: 'PUT' });
+                        if(!res.ok){
+                            const t = await res.text();
+                            alert('Failed to cancel: ' + t);
+                        } else {
+                            closeCancelModal();
+                            fetchAppointments();
+                        }
+                    } catch(err){
+                        console.error(err);
+                        alert('Network error cancelling appointment');
+                    } finally {
+                        pendingCancelId = null;
+                    }
+                });
+            }
+            // Close when clicking backdrop
+            document.addEventListener('click', (e) => {
+                const modal = document.getElementById('cancelModal');
+                if(!modal || modal.classList.contains('hidden')) return;
+                if(e.target === modal) closeCancelModal();
+            });
+        });
+    </script>
+
+    <!-- Cancel Appointment Modal -->
+    <div id="cancelModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 relative">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Cancel Appointment</h2>
+                <p class="text-sm text-gray-600 mb-6">Are you sure you want to cancel this appointment?</p>
+                <div class="flex justify-end gap-3">
+                    <button id="backCancelBtn" class="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm">Back</button>
+                    <button id="confirmCancelBtn" class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm">Cancel Appointment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

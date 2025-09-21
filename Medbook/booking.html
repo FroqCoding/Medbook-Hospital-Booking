@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .time-slot { transition: all .15s ease; }
+        .time-slot.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+        .time-slot:hover { background:#eff6ff; }
+        .day-btn.active { background:#2563eb; color:#fff; }
+    </style>
+    <script>
+      (function(){
+        const allowed = localStorage.getItem('isLoggedIn')==='true';
+        if(!allowed){
+          document.addEventListener('DOMContentLoaded', ()=>{
+            document.body.innerHTML = `<div class='min-h-screen flex items-center justify-center bg-gray-50 p-6'>
+              <div class='bg-white rounded-lg shadow p-8 max-w-md text-center'>
+                <h1 class='text-xl font-semibold text-gray-900 mb-2'>Login Needed</h1>
+                <p class='text-sm text-gray-600 mb-6'>Please log in before booking an appointment.</p>
+                <a href='login.html' class='inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium'>Go to Login</a>
+              </div>
+            </div>`;
+          });
+          setTimeout(()=>window.location.replace('login.html'), 2000);
+        }
+      })();
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div id="mainContent" class="flex-grow">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <a href="index.html" class="flex items-center">
+                            <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                            <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                        <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                        <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                        <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                    </div>
+                    <div class="flex items-center" id="navUserAction">
+                        <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Booking Progress -->
+        <div class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="py-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center"><span class="text-white text-sm font-medium">1</span></div>
+                            <div class="ml-2 text-sm font-medium text-gray-900">Select Doctor</div>
+                        </div>
+                        <div class="hidden sm:block w-1/4 h-0.5 bg-blue-500 mx-2"></div>
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center"><span class="text-white text-sm font-medium">2</span></div>
+                            <div class="ml-2 text-sm font-medium text-gray-900">Select Time</div>
+                        </div>
+                        <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center"><span class="text-gray-500 text-sm font-medium">3</span></div>
+                            <div class="ml-2 text-sm font-medium text-gray-500">Confirm Details</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Content -->
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Doctor Info -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex items-center">
+                                <img class="h-16 w-16 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Doctor">
+                                <div class="ml-4">
+                                    <h3 id="doctorName" class="text-lg font-medium text-gray-900">Doctor Name</h3>
+                                    <p id="doctorSpeciality" class="text-sm text-blue-500">Speciality</p>
+                                    <p id="doctorHospital" class="text-xs text-gray-500"></p>
+                                </div>
+                            </div>
+                            <div class="mt-6 border-t pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Choose Date</label>
+                                <input id="appointmentDate" type="date" class="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" />
+                            </div>
+                            <div class="mt-4">
+                                <button id="loadSlotsBtn" class="w-full bg-blue-500 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-md">Check Availability</button>
+                            </div>
+                            <div class="mt-6 border-t pt-4">
+                                <label for="reasonInput" class="block text-sm font-medium text-gray-700 mb-1">Reason for Visit (optional)</label>
+                                <textarea id="reasonInput" rows="3" placeholder="e.g. Chest pain follow-up, annual physical, etc." class="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm p-2 resize-y"></textarea>
+                                <p id="reasonCount" class="mt-1 text-xs text-gray-400">0 / 250</p>
+                            </div>
+                            <div class="mt-4 hidden" id="dateAlert">
+                                <p class="text-xs text-red-500">Please select a date first.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button id="backToDoctors" class="w-full text-sm text-gray-600 hover:text-gray-800 flex items-center justify-center"><i data-feather="chevron-left" class="h-4 w-4 mr-1"></i>Back to doctors</button>
+                    </div>
+                </div>
+
+                <!-- Time Selection -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">Select Appointment Time</h3>
+                                <p id="selectedDateLabel" class="mt-1 text-sm text-gray-500">No date selected</p>
+                            </div>
+                            <div id="loadingSpinner" class="hidden animate-spin text-blue-500"><i data-feather="loader" class="h-6 w-6"></i></div>
+                        </div>
+                        <div class="p-6" id="timeSection">
+                            <div id="timeSlotsWrapper" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                            <div id="noSlots" class="hidden text-sm text-gray-500">Select a date to view availability.</div>
+                        </div>
+                        <div class="p-4 bg-gray-50 border-t flex justify-end">
+                            <button id="continueBtn" disabled class="px-4 py-2 bg-gray-300 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed">Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 mt-12">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">&copy; 2025 MedBook. All rights reserved.</div>
+    </footer>
+
+<script>
+AOS.init({duration:800,easing:'ease-in-out',once:true}); feather.replace();
+
+// Navbar profile/login/logout logic
+(function(){
+  const navUserAction = document.getElementById('navUserAction');
+  if(!navUserAction) return;
+  if(localStorage.getItem('isLoggedIn')==='true'){
+      navUserAction.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <button id="profileBtn" class="flex items-center focus:outline-none">
+            <img src="https://www.gravatar.com/avatar/?d=mp&s=32" alt="Profile" class="rounded-full h-8 w-8" />
+          </button>
+          <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
+        </div>`;
+      document.getElementById('profileBtn').addEventListener('click',()=>window.location.href='profile.html');
+      document.getElementById('logoutBtn').addEventListener('click',()=>{localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userId'); window.location.href='login.html';});
+  }
+})();
+
+// Read query params (from doctors page)
+const qs = new URLSearchParams(window.location.search);
+const doctorId = qs.get('doctorid');
+const doctorName = decodeURIComponent(qs.get('name')||'');
+const speciality = decodeURIComponent(qs.get('speciality')||'');
+const hospital = decodeURIComponent(qs.get('hospital')||'');
+const preDate = qs.get('date'); // optional pre-filled date from earlier filter
+
+// Populate doctor info
+if (doctorName) document.getElementById('doctorName').textContent = doctorName;
+if (speciality) document.getElementById('doctorSpeciality').textContent = speciality;
+if (hospital) document.getElementById('doctorHospital').textContent = hospital;
+if (preDate) {
+    document.getElementById('appointmentDate').value = preDate;
+    document.getElementById('selectedDateLabel').textContent = formatDate(preDate);
+}
+
+// Back link preserving filters
+const backBtn = document.getElementById('backToDoctors');
+backBtn.addEventListener('click', () => {
+    const backParams = new URLSearchParams();
+    if (qs.get('f_specialty')) backParams.append('specialty', qs.get('f_specialty'));
+    if (qs.get('f_hospital')) backParams.append('hospital', qs.get('f_hospital'));
+    if (preDate) backParams.append('date', preDate);
+    window.location.href = 'doctors.html' + (backParams.toString()? ('?' + backParams.toString()) : '');
+});
+
+function formatDate(d){
+    try { return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});} catch { return d; }
+}
+
+const loadBtn = document.getElementById('loadSlotsBtn');
+const dateInput = document.getElementById('appointmentDate');
+const dateAlert = document.getElementById('dateAlert');
+const timeSlotsWrapper = document.getElementById('timeSlotsWrapper');
+const noSlots = document.getElementById('noSlots');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const continueBtn = document.getElementById('continueBtn');
+let chosenTime = null;
+
+// Character count for reason
+const reasonInput = document.getElementById('reasonInput');
+const reasonCount = document.getElementById('reasonCount');
+reasonInput.addEventListener('input',()=>{ if(reasonInput.value.length>250) reasonInput.value=reasonInput.value.slice(0,250); reasonCount.textContent=`${reasonInput.value.length} / 250`; });
+
+loadBtn.addEventListener('click', () => {
+    const dateVal = dateInput.value;
+    if(!dateVal){ dateAlert.classList.remove('hidden'); return; } else { dateAlert.classList.add('hidden'); }
+    fetchSlots(dateVal);
+});
+
+dateInput.addEventListener('change', () => {
+    if(dateInput.value){
+        document.getElementById('selectedDateLabel').textContent = formatDate(dateInput.value);
+    } else {
+        document.getElementById('selectedDateLabel').textContent = 'No date selected';
+    }
+});
+
+let userAppointmentsCache = [];
+const currentUserId = localStorage.getItem('userId');
+(async function preloadUserAppointments(){
+  if(!currentUserId) return;
+  try {
+    const r = await fetch(`${window.location.origin}/users/${currentUserId}/appointments`);
+    if(r.ok){ userAppointmentsCache = await r.json(); }
+  } catch(e){ console.warn('Could not preload user appointments', e); }
+})();
+
+async function fetchSlots(dateVal){
+    if(!doctorId) return;
+    // Past date check (date only, ignoring time)
+    const dateObj = new Date(dateVal);
+    const today = new Date(); today.setHours(0,0,0,0);
+    if(isNaN(dateObj.getTime())) return;
+    if(dateObj < today){
+        timeSlotsWrapper.innerHTML='';
+        noSlots.textContent='Selected date is in the past. Please choose a future date.';
+        noSlots.classList.remove('hidden');
+        continueBtn.disabled = true; continueBtn.className='px-4 py-2 bg-gray-300 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed';
+        return;
+    }
+    loadingSpinner.classList.remove('hidden');
+    timeSlotsWrapper.innerHTML='';
+    noSlots.classList.add('hidden');
+    continueBtn.disabled = true; continueBtn.className='px-4 py-2 bg-gray-300 text-gray-600 rounded-md text-sm font-medium cursor-not-allowed';
+    try {
+        const resp = await fetch(`${window.location.origin}/doctors/${doctorId}/availability?date=${dateVal}`);
+        const slots = resp.ok ? await resp.json() : [];
+        if(!slots.length){ noSlots.textContent='No availability for this date.'; noSlots.classList.remove('hidden'); return; }
+        // build set of booked times for this doctor/date (status true only)
+        const bookedTimes = new Set(
+          userAppointmentsCache
+            .filter(a => a.doctorid == doctorId && a.date === dateVal && (a.status === true || a.status === 1))
+            .map(a => a.time)
+        );
+        const groups = {Morning:[],Afternoon:[],Evening:[]};
+        slots.forEach(s=>{ const hour=parseInt(s.split(':')[0]); if(hour<12) groups.Morning.push(s); else if(hour<17) groups.Afternoon.push(s); else groups.Evening.push(s); });
+        Object.keys(groups).forEach(label=>{
+            if(!groups[label].length) return;
+            const col = document.createElement('div');
+            col.innerHTML = `<h4 class="text-sm font-medium text-gray-900 mb-2">${label}</h4>`;
+            const list = document.createElement('div'); list.className='flex flex-wrap gap-2';
+            groups[label].forEach(t=>{ 
+                const b=document.createElement('button'); 
+                b.type='button'; b.textContent=t; 
+                const isBooked = bookedTimes.has(t);
+                b.className='time-slot px-3 py-1.5 border rounded-md text-xs font-medium ' + (isBooked ? 'border-gray-200 bg-gray-200 text-gray-400 cursor-not-allowed line-through' : 'border-gray-300 bg-white');
+                if(!isBooked){
+                  b.addEventListener('click',()=>selectTime(b,t));
+                } else {
+                  b.disabled = true;
+                  b.setAttribute('title','You already have an appointment at this time');
+                }
+                list.appendChild(b); 
+            });
+            col.appendChild(list); timeSlotsWrapper.appendChild(col);
+        });
+    } catch(e){ console.error(e); noSlots.textContent='Error loading availability.'; noSlots.classList.remove('hidden'); }
+    finally { loadingSpinner.classList.add('hidden'); }
+}
+
+function selectTime(btn,time){
+    document.querySelectorAll('.time-slot').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); chosenTime = time; enableContinue();
+}
+
+function enableContinue(){
+    if(chosenTime && dateInput.value){
+        continueBtn.disabled=false;
+        continueBtn.className='px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white rounded-md text-sm font-medium';
+    }
+}
+
+continueBtn.addEventListener('click', () => {
+    if(!chosenTime || !dateInput.value) return; // safety
+    const params = new URLSearchParams({
+        doctorid: doctorId,
+        name: encodeURIComponent(doctorName),
+        speciality: encodeURIComponent(speciality),
+        hospital: encodeURIComponent(hospital),
+        date: dateInput.value,
+        time: chosenTime
+    });
+    const reasonVal = reasonInput.value.trim();
+    if (reasonVal) params.append('reason', encodeURIComponent(reasonVal));
+    // Preserve original filter context for navigating back from confirm if desired
+    if (qs.get('f_specialty')) params.append('f_specialty', qs.get('f_specialty'));
+    if (qs.get('f_hospital')) params.append('f_hospital', qs.get('f_hospital'));
+    window.location.href = 'confirm.html?' + params.toString();
+});
+</script>
+</body>
+</html>

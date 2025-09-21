@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center flex-shrink-0">
+                    <a href="index.html" class="flex items-center">
+                    <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                    <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                    </a>
+                </div>
+                <div class="flex-1 flex justify-center">
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="about.html" class="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium">About</a>
+                </div>
+                </div>
+                <div class="flex items-center" id="navUserAction">
+                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl" data-aos="fade-up">
+                    About MedBook
+                </h1>
+                <p class="mt-4 max-w-xl mx-auto text-base text-gray-500" data-aos="fade-up" data-aos-delay="100">
+                    A fun side project created by passionate developers
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-2xl font-bold text-gray-900" data-aos="fade-up">Meet the Team</h2>
+            <p class="mt-4 text-gray-500" data-aos="fade-up" data-aos-delay="100">
+                The creative minds behind this project
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2">
+            <!-- Farouq Profile -->
+            <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300" data-aos="fade-up">
+                <div class="p-6">
+                    <div class="flex flex-col items-center">
+                        <img class="h-32 w-32 rounded-full object-cover mb-4" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Farouq Arafah">
+                        <h3 class="text-xl font-medium text-gray-900">Farouq Arafah</h3>
+                        <p class="text-sm text-blue-500">Computer Scientist & Web Developer</p>
+                    </div>
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-500 text-center">
+                            Passionate about creating innovative web solutions and pushing the boundaries of technology.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mohammed Profile -->
+            <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <div class="p-6">
+                    <div class="flex flex-col items-center">
+                        <img class="h-32 w-32 rounded-full object-cover mb-4" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Mohammed Alfarra">
+                        <h3 class="text-xl font-medium text-gray-900">Mohammed Alfarra</h3>
+                        <p class="text-sm text-blue-500">Summa Cum Laude FIU Computer Science Graduate | STARS Tutor | Software Engineer & Data Scientist</p>
+                    </div>
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-500 text-center">
+                            Dedicated to solving complex problems through software engineering and data science.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Info -->
+    <div class="bg-gray-50 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white shadow rounded-lg p-8" data-aos="fade-up">
+                <div class="text-center">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">About This Project</h3>
+                    <p class="text-gray-500">
+                        MedBook is just a fun side little test project created to explore web development technologies and UI/UX design principles.
+                        It's not a real medical booking platform, but rather a demonstration of what could be built.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-base text-gray-400">&copy; 2025 MedBook. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile icon logic for all pages
+            const navUserAction = document.getElementById('navUserAction');
+            if (navUserAction && localStorage.getItem('isLoggedIn') === 'true') {
+                navUserAction.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button id="profileBtn" class="flex items-center focus:outline-none">
+                            <img src="https://www.gravatar.com/avatar/?d=mp&s=32" alt="Profile" class="rounded-full h-8 w-8">
+                        </button>
+                        <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
+                    </div>
+                `;
+                document.getElementById('profileBtn').addEventListener('click', function() {
+                    window.location.href = 'profile.html';
+                });
+                document.getElementById('logoutBtn').addEventListener('click', function() {
+                    localStorage.removeItem('isLoggedIn');
+                    window.location.href = 'login.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

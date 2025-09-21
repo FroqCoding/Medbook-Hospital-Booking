@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Details - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .summary-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="flex-grow">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <a href="index.html" class="flex items-center">
+                            <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                            <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                        <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                        <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                        <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                    </div>
+                    <div class="flex items-center" id="navUserAction">
+                        <!-- Dynamic login/profile/logout buttons will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Booking Progress -->
+        <div class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="py-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">1</span>
+                            </div>
+                            <div class="ml-2 text-sm font-medium text-gray-900">Select Doctor</div>
+                        </div>
+                        <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">2</span>
+                            </div>
+                            <div class="ml-2 text-sm font-medium text-gray-900">Select Time</div>
+                        </div>
+                        <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">3</span>
+                            </div>
+                            <div class="ml-2 text-sm font-medium text-gray-900">Confirm Details</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Content -->
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Appointment Summary -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow overflow-hidden summary-card transition-all duration-300">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">Appointment Summary</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flex items-center">
+                                <img class="h-16 w-16 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Dr. Lina Haddad">
+                                <div class="ml-4">
+                                    <h3 id="doctorName" class="text-lg font-medium text-gray-900">Doctor Name</h3>
+                                    <p id="doctorSpeciality" class="text-sm text-blue-500">Speciality</p>
+                                    <div class="flex text-yellow-400 mt-1" id="ratingRow" style="display:none"></div>
+                                </div>
+                            </div>
+                            <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Date & Time</h4>
+                                    <p id="dateTimeDisplay" class="mt-1 text-sm text-gray-900"></p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Location</h4>
+                                    <p id="hospitalDisplay" class="mt-1 text-sm text-gray-900"></p>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <h4 class="text-sm font-medium text-gray-500">Reason for Visit</h4>
+                                <p id="reasonDisplay" class="mt-1 text-sm text-gray-900">Routine checkup and consultation for ongoing heart condition management.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Information -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden mt-6 summary-card transition-all duration-300">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">Patient Information</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Full Name</h4>
+                                    <p class="mt-1 text-sm text-gray-900 patient-name">—</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Date of Birth</h4>
+                                    <p class="mt-1 text-sm text-gray-900 patient-dob">—</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Phone Number</h4>
+                                    <p class="mt-1 text-sm text-gray-900 patient-phone">—</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">Email</h4>
+                                    <p class="mt-1 text-sm text-gray-900 patient-email">—</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 hidden" id="patientAddressBlock">
+                                <h4 class="text-sm font-medium text-gray-500">Address</h4>
+                                <p class="mt-1 text-sm text-gray-900 patient-address">—</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Confirmation -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow overflow-hidden sticky top-6">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">Confirm Booking</h3>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="terms" class="ml-2 block text-sm text-gray-700">
+                                        I agree to the <a href="#" class="font-medium text-blue-500 hover:text-blue-700">terms and conditions</a>
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="privacy" name="privacy" type="checkbox" class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="privacy" class="ml-2 block text-sm text-gray-700">
+                                        I agree to the <a href="#" class="font-medium text-blue-500 hover:text-blue-700">privacy policy</a>
+                                    </label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input id="notifications" name="notifications" type="checkbox" class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="notifications" class="ml-2 block text-sm text-gray-700">
+                                        Send me appointment reminders
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <button id="confirmAppointmentBtn" type="button" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    Confirm Appointment
+                                </button>
+                            </div>
+                            <div class="mt-4">
+                                <button id="backBtn" type="button" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Back to Time Selection</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Need Help? -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden mt-6">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h3 class="text-lg font-medium text-gray-900">Need Help?</h3>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Our support team is available 24/7 to assist you with your booking.
+                            </p>
+                            <div class="mt-4">
+                                <a href="#" class="text-blue-500 hover:text-blue-700 text-sm font-medium">
+                                    Contact Support →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800">
+      <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-base text-gray-400">&copy; 2025 MedBook. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <!-- Success Toast -->
+    <div id="bookingSuccess" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded shadow-lg text-sm font-medium z-50">
+        Appointment booked successfully
+    </div>
+
+    <!-- Login Required Modal -->
+    <div id="loginPromptModal" class="hidden fixed inset-0 z-50 items-center justify-center">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative bg-white rounded-lg shadow-lg w-full max-w-sm mx-4 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4 text-center">You need to log in to book an appointment.</h2>
+            <div class="flex flex-col space-y-3">
+                <button id="goLoginBtn" class="w-full inline-flex justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2">Login/Singup page</button>
+                <button id="loginPromptBackBtn" class="w-full inline-flex justify-center rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        AOS.init({ duration:800, easing:'ease-in-out', once:true }); feather.replace();
+        // Navbar profile/login/logout
+        (function(){
+            const navUserAction = document.getElementById('navUserAction');
+            if(!navUserAction) return;
+            if(localStorage.getItem('isLoggedIn')==='true'){
+                navUserAction.innerHTML = `
+                  <div class="flex items-center space-x-2">
+                    <button id="profileBtn" class="flex items-center focus:outline-none">
+                      <img src="https://www.gravatar.com/avatar/?d=mp&s=32" alt="Profile" class="rounded-full h-8 w-8" />
+                    </button>
+                    <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
+                  </div>`;
+                document.getElementById('profileBtn').addEventListener('click',()=>window.location.href='profile.html');
+                document.getElementById('logoutBtn').addEventListener('click',()=>{localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userId'); window.location.href='login.html';});
+            }
+        })();
+        const qs=new URLSearchParams(window.location.search);
+        const doctorName=decodeURIComponent(qs.get('name')||'');
+        const speciality=decodeURIComponent(qs.get('speciality')||'');
+        const hospital=decodeURIComponent(qs.get('hospital')||'');
+        const date=qs.get('date');
+        const time=qs.get('time');
+        const doctorId=qs.get('doctorid');
+        const reasonRaw=qs.get('reason');
+        const reason = reasonRaw ? decodeURIComponent(reasonRaw) : '';
+        document.getElementById('doctorName').textContent=doctorName||'Doctor';
+        document.getElementById('doctorSpeciality').textContent=speciality||'';
+        document.getElementById('hospitalDisplay').textContent=hospital||'';
+        if(reason){ document.getElementById('reasonDisplay').textContent = reason; } else { document.getElementById('reasonDisplay').textContent='unstated'; }
+        function fmtDate(d){try{return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});}catch{return d;}}
+        if(date && time){
+            document.getElementById('dateTimeDisplay').textContent=fmtDate(date)+' at '+time;
+        } else if(date){
+            document.getElementById('dateTimeDisplay').textContent=fmtDate(date)+': choose time';
+        } else {
+            document.getElementById('dateTimeDisplay').textContent='Missing date & time';
+        }
+        // Populate patient info
+        (async function populatePatient(){
+            const uid = localStorage.getItem('userId');
+            if(!uid){
+                document.querySelector('.patient-name').textContent = 'Not logged in';
+                return;
+            }
+            try {
+                const r = await fetch(`${window.location.origin}/users/` + uid);
+                if(!r.ok){ throw new Error('Failed to load user'); }
+                const u = await r.json();
+                const fmtDob = u.date_of_birth ? new Date(u.date_of_birth).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}) : '—';
+                document.querySelectorAll('.patient-name').forEach(el=>el.textContent=u.name||'—');
+                document.querySelectorAll('.patient-dob').forEach(el=>el.textContent=fmtDob);
+                document.querySelectorAll('.patient-phone').forEach(el=>el.textContent=u.phone||'—');
+                document.querySelectorAll('.patient-email').forEach(el=>el.textContent=u.email||'—');
+            } catch(e){
+                console.error('patient info load error', e);
+            }
+        })();
+        // Remove availability fetch & selection logic – already chosen in booking step
+        // Confirm button handler placeholder
+        // Find Confirm button (first primary button in confirm card)
+        (function(){
+            const loginModal = document.getElementById('loginPromptModal');
+            const confirmButton = document.getElementById('confirmAppointmentBtn');
+            const goLoginBtn = document.getElementById('goLoginBtn');
+            const loginPromptBackBtn = document.getElementById('loginPromptBackBtn');
+            function openLoginPrompt(){ loginModal.classList.remove('hidden'); loginModal.classList.add('flex'); }
+            function closeLoginPrompt(){ loginModal.classList.add('hidden'); loginModal.classList.remove('flex'); }
+            goLoginBtn.addEventListener('click', ()=>{ window.location.href='login.html'; });
+            loginPromptBackBtn.addEventListener('click', ()=>{ closeLoginPrompt(); });
+            // Intercept existing click (remove previous listener by cloning)
+            if(confirmButton){
+                const newBtn = confirmButton.cloneNode(true);
+                confirmButton.parentNode.replaceChild(newBtn, confirmButton);
+            }
+        })();
+        // Re-bind confirm button with modal check (must run after earlier script that sets variables)
+        (function(){
+            const confirmButton = document.getElementById('confirmAppointmentBtn');
+            const loginModal = document.getElementById('loginPromptModal');
+            const doctorId = new URLSearchParams(window.location.search).get('doctorid');
+            const qs=new URLSearchParams(window.location.search);
+            const date=qs.get('date');
+            const time=qs.get('time');
+            const reasonRaw=qs.get('reason');
+            const reason = reasonRaw ? decodeURIComponent(reasonRaw) : '';
+            function openLoginPrompt(){ loginModal.classList.remove('hidden'); loginModal.classList.add('flex'); }
+            if(confirmButton){
+                confirmButton.addEventListener('click', async ()=>{
+                    const userId = localStorage.getItem('userId');
+                    if(!userId){ openLoginPrompt(); return; }
+                    if(!date||!time){ alert('Missing date/time'); return; }
+                    const payload = { userid: parseInt(userId), doctorid: parseInt(doctorId), date: date, time: time, reason: reason };
+                    try {
+                        const resp = await fetch(`${window.location.origin}/appointments`,{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+                        if (!resp.ok) {
+                            const err=await resp.json().catch(()=>({message:'Failed'}));
+                            // Attempt to fetch schema debug info to console
+                            try { const schema = await fetch(`${window.location.origin}/debug/appointments/schema`).then(r=>r.json()); console.error('Appointments table schema:', schema); } catch(e2){ console.warn('Schema debug fetch failed', e2); }
+                            alert('Error: '+ (err.message || resp.status) + (err.error ? ('\nDetails: '+err.error) : ''));
+                            return; }
+                        await resp.json();
+                        const toast = document.getElementById('bookingSuccess');
+                        toast.classList.remove('hidden');
+                        toast.classList.add('animate-slide-in');
+                        setTimeout(()=>{ window.location.href='profile.html'; },1200);
+                    } catch(e){ console.error(e); alert('Network error booking appointment'); }
+                });
+            }
+        })();
+        (function(){
+          if(localStorage.getItem('isLoggedIn')!=='true'){
+            document.addEventListener('DOMContentLoaded', ()=>{
+              document.body.innerHTML = `<div class='min-h-screen flex items-center justify-center bg-gray-50 p-6'>
+                <div class='bg-white rounded-lg shadow p-8 max-w-md text-center'>
+                  <h1 class='text-xl font-semibold text-gray-900 mb-2'>Authentication Required</h1>
+                  <p class='text-sm text-gray-600 mb-6'>You need to log in before confirming an appointment.</p>
+                  <a href='login.html' class='inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium'>Go to Login</a>
+                </div>
+              </div>`;
+            });
+            setTimeout(()=>window.location.replace('login.html'), 2000);
+          }
+        })();
+    </script>
+</body>
+</html>
