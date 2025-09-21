@@ -593,22 +593,22 @@ def debug_users_schema():
     return jsonify({'columns': cols})
 
 # ----------------------
-# Simple static file serving so ngrok root shows the app
-# ----------------------
+# Simple static file serving (serve HTML from this package directory rather than CWD)
+# Prevents breakage after removing legacy root-level duplicates.
+from pathlib import Path
+_FRONTEND_DIR = Path(__file__).parent
+
 @app.route('/')
 def serve_root():
-    # Serve main landing page
-    return send_from_directory('.', 'index.html')
+    return send_from_directory(_FRONTEND_DIR, 'index.html')
 
 @app.route('/<path:page>')
 def serve_page(page):
-    # Only allow known html pages; avoid clashing with JSON API endpoints
     allowed = {
-        'index.html','doctors.html','booking.html','confirm.html','profile.html','login.html','about.html','doc-profile.html'
+        'index.html','doctors.html','booking.html','confirm.html','profile.html','login.html','about.html','doc-profile.html','doctor_signup.html'
     }
     if page in allowed:
-        return send_from_directory('.', page)
-    # let API routes continue to work (they are defined explicitly like /doctors)
+        return send_from_directory(_FRONTEND_DIR, page)
     return ("Not Found", 404)
 
 # ----------------------
