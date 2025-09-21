@@ -64,27 +64,27 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <div class="bg-white shadow rounded-lg p-6">
             <!-- Progress Bar -->
-            <div class="mb-8">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center">
-                            <span class="text-white text-sm font-medium">1</span>
+            <div class="mb-8" id="progressWrapper">
+                <div class="flex justify-between items-center" id="progressBar">
+                    <div class="flex items-center step-indicator" data-step="1">
+                        <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-blue-500 text-white">
+                            <span class="text-sm font-medium">1</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium text-gray-900">Personal Info</div>
+                        <div class="ml-2 text-sm font-medium step-label text-gray-900">Personal Info</div>
                     </div>
-                    <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center">
-                            <span class="text-gray-500 text-sm font-medium">2</span>
+                    <div class="hidden sm:block w-1/4 h-0.5 mx-2 step-connector bg-gray-200" data-connector="1"></div>
+                    <div class="flex items-center step-indicator" data-step="2">
+                        <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-gray-200 text-gray-500">
+                            <span class="text-sm font-medium">2</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium text-gray-500">Professional Info</div>
+                        <div class="ml-2 text-sm font-medium step-label text-gray-500">Professional Info</div>
                     </div>
-                    <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center">
-                            <span class="text-gray-500 text-sm font-medium">3</span>
+                    <div class="hidden sm:block w-1/4 h-0.5 mx-2 step-connector bg-gray-200" data-connector="2"></div>
+                    <div class="flex items-center step-indicator" data-step="3">
+                        <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-gray-200 text-gray-500">
+                            <span class="text-sm font-medium">3</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium text-gray-500">Availability</div>
+                        <div class="ml-2 text-sm font-medium step-label text-gray-500">Availability</div>
                     </div>
                 </div>
             </div>
@@ -293,7 +293,7 @@
                     </a>
                 </div>
                 <p class="mt-8 text-base text-gray-400 md:mt-0 md:order-1">
-                    &copy; 2023 MedBook. All rights reserved.
+                    &copy; 2025 MedBook. All rights reserved.
                 </p>
             </div>
         </div>
@@ -307,15 +307,57 @@
         });
         feather.replace();
 
+        function updateProgress(activeStep) {
+            document.querySelectorAll('.step-indicator').forEach(el => {
+                const step = parseInt(el.getAttribute('data-step'));
+                const circle = el.querySelector('.step-circle');
+                const label = el.querySelector('.step-label');
+                // Reset
+                circle.classList.remove('bg-blue-500','text-white');
+                circle.classList.add('bg-gray-200','text-gray-500');
+                label.classList.remove('text-gray-900');
+                label.classList.add('text-gray-500');
+                if (step === activeStep) {
+                    circle.classList.remove('bg-gray-200','text-gray-500');
+                    circle.classList.add('bg-blue-500','text-white');
+                    label.classList.remove('text-gray-500');
+                    label.classList.add('text-gray-900');
+                } else if (step < activeStep) {
+                    circle.classList.remove('bg-gray-200','text-gray-500');
+                    circle.classList.add('bg-blue-500','text-white');
+                    label.classList.remove('text-gray-500');
+                    label.classList.add('text-blue-600');
+                }
+            });
+            // connectors
+            document.querySelectorAll('.step-connector').forEach(conn => {
+                const idx = parseInt(conn.getAttribute('data-connector'));
+                if (idx < activeStep) {
+                    conn.classList.remove('bg-gray-200');
+                    conn.classList.add('bg-blue-500');
+                } else {
+                    conn.classList.remove('bg-blue-500');
+                    conn.classList.add('bg-gray-200');
+                }
+            });
+        }
+
         function nextStep(currentStep) {
             document.getElementById('step' + currentStep).classList.remove('active');
-            document.getElementById('step' + (currentStep + 1)).classList.add('active');
+            const next = currentStep + 1;
+            document.getElementById('step' + next).classList.add('active');
+            updateProgress(next);
         }
 
         function prevStep(currentStep) {
             document.getElementById('step' + currentStep).classList.remove('active');
-            document.getElementById('step' + (currentStep - 1)).classList.add('active');
+            const prev = currentStep - 1;
+            document.getElementById('step' + prev).classList.add('active');
+            updateProgress(prev);
         }
+
+        // initial
+        updateProgress(1);
 
         document.getElementById('doctorSignupForm').addEventListener('submit', function(e) {
             e.preventDefault();
