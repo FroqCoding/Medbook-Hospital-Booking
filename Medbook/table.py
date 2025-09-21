@@ -5,7 +5,6 @@ from flask_jwt_extended import JWTManager, create_access_token
 from flask_cors import CORS
 from datetime import datetime, date
 import os
-# Attempt to load .env if present
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -21,27 +20,38 @@ CORS(app)
 # fall back to a local sqlite database because that causes data loss & confusion.
 # In local development (RENDER not set) we allow sqlite fallback.
 
-raw_db_url = os.getenv('DATABASE_URL')
+possible_db_vars = [
+    'DATABASE_URL','DB_URL','POSTGRES_URL','POSTGRES_URI','DATABASE_URI'
+]
+raw_db_url = None
+for _v in possible_db_vars:
+    val = os.getenv(_v)
+    if val:
+        raw_db_url = val
+        break
 
 # Enhanced Render detection: check for any known Render-provided vars.
 render_markers = [
-    'RENDER', 'RENDER_SERVICE_ID', 'RENDER_SERVICE_NAME', 'RENDER_INSTANCE_ID', 'RENDER_EXTERNAL_URL'
+    'RENDER','RENDER_SERVICE_ID','RENDER_SERVICE_NAME','RENDER_INSTANCE_ID','RENDER_EXTERNAL_URL'
 ]
 on_render = any(os.getenv(k) for k in render_markers)
 
 # Normalize older postgres:// URI to postgresql:// for SQLAlchemy compatibility.
 if raw_db_url and raw_db_url.startswith('postgres://'):
-    raw_db_url = raw_db_url.replace('postgres://', 'postgresql://', 1)
+    raw_db_url = raw_db_url.replace('postgres://','postgresql://',1)
 
 # Disallow implicit fallback: require DATABASE_URL always.
 if not raw_db_url:
-    # Provide environment snapshot keys to aid debugging in logs.
-    env_keys_preview = ','.join(sorted(k for k in os.environ.keys() if k.startswith('RENDER')))
-    raise RuntimeError(
-        'DATABASE_URL is not set. Set it to your Postgres connection string. '
-        f'Render detected={on_render}. Render-related envs: {env_keys_preview or "<none>"}'
-    )
-
+    if on_render:
+        env_keys_preview = ','.join(sorted(k for k in os.environ.keys() if k.startswith('RENDER')))
+        raise RuntimeError(
+            'DATABASE_URL (or DB_URL/POSTGRES_URL/POSTGRES_URI/DATABASE_URI) is not set. '
+            'Add your Postgres connection string in the Render dashboard. '
+            f'Render detected={on_render}. Render-related envs: {env_keys_preview or "<none>"}'
+        )
+    else:
+        raw_db_url = 'sqlite:///local_dev.db'
+        print('[startup] WARNING: No DATABASE_URL found; using local sqlite:///local_dev.db (development only)')
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key')
@@ -647,6 +657,36 @@ def debug_config():
         'sqlalchemy_url': app.config['SQLALCHEMY_DATABASE_URI'],
         'has_secret_key': bool(app.config.get('SECRET_KEY')),
         'env_render': bool(os.getenv('RENDER'))
+    })
+
+# ----------------------
+# Debug: environment variables
+# ----------------------
+@app.route('/debug/env')
+def debug_env():
+    seen = {}
+    for k in possible_db_vars:
+        if os.getenv(k):
+            seen[k] = True
+    active = app.config['SQLALCHEMY_DATABASE_URI']
+    redacted = active
+    if '://' in redacted:
+        try:
+            scheme, rest = redacted.split('://',1)
+            if '@' in rest:
+                creds, hostpart = rest.split('@',1)
+                if ':' in creds:
+                    user = creds.split(':',1)[0]
+                else:
+                    user = creds
+                redacted = f"{scheme}://{user}:***@{hostpart}"
+        except Exception:
+            pass
+    return jsonify({
+        'render_detected': on_render,
+        'db_url_redacted': redacted,
+        'db_driver': app.config['SQLALCHEMY_DATABASE_URI'].split(':',1)[0],
+        'db_env_vars_seen': list(seen.keys())
     })
 
 # ----------------------
