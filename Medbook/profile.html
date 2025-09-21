@@ -489,28 +489,32 @@
         function escapeHtml(str){ return str.replace(/[&<>"/]+/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','/':'&#47;'}[c])); }
 
         function openRatingModal(appointmentId, doctorName, speciality){
-            // Populate modal content
             document.getElementById('rateAppointmentId').value = appointmentId;
             document.getElementById('rateDoctorMeta').textContent = `${doctorName} • ${speciality}`;
             document.getElementById('rateComment').value='';
             currentStarValue = 0;
-            renderStars();
-            document.getElementById('submitRateBtn').disabled = true;
+            // Ensure modal visible before we attempt to focus stars
             const modal = document.getElementById('rateModal');
-            modal.classList.remove('hidden');
-            modal.setAttribute('aria-hidden','false');
-            // Focus first star after rendering
+            if(modal){
+                modal.classList.remove('hidden');
+                modal.setAttribute('aria-hidden','false');
+            }
+            renderStars();
+            const submitBtn = document.getElementById('submitRateBtn');
+            if(submitBtn) submitBtn.disabled = true;
             setTimeout(()=>{
                 const firstStar = document.querySelector('#starContainer button');
                 if(firstStar) firstStar.focus();
-            },10);
+            }, 30);
         }
 
-        // Rating stars logic
-        const starContainer = document.getElementById('starContainer');
+        // Rating stars logic (dynamic container lookup to avoid null capture before DOM exists)
         let currentStarValue = 0;
+        function getStarContainer(){ return document.getElementById('starContainer'); }
         function renderStars(){
-            starContainer.innerHTML='';
+            const sc = getStarContainer();
+            if(!sc){ console.warn('[profile] starContainer not found at render time'); return; }
+            sc.innerHTML='';
             for(let i=1;i<=5;i++){
                 const btn = document.createElement('button');
                 btn.type='button';
@@ -528,7 +532,7 @@
                     if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectStar(i); }
                     if(e.key==='Escape'){ closeRateModal(); }
                 });
-                starContainer.appendChild(btn);
+                sc.appendChild(btn);
             }
         }
         function getStarSvg(filled){
@@ -537,7 +541,9 @@
                 : '<svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5c.26-.78 1.36-.78 1.62 0l1.35 4.07c.11.32.41.54.75.54h4.28c.82 0 1.16 1.05.5 1.54l-3.46 2.51c-.27.2-.39.54-.28.87l1.32 3.98c.26.78-.64 1.44-1.31.95l-3.46-2.51a.93.93 0 00-1.09 0l-3.46 2.51c-.67.49-1.57-.17-1.31-.95l1.32-3.98a.83.83 0 00-.28-.87L3.05 9.64c-.66-.49-.32-1.54.5-1.54h4.28c.34 0 .64-.22.75-.54l1.35-4.07z"/></svg>';
         }
         function tempFill(to){
-            const buttons = starContainer.querySelectorAll('button');
+            const sc = getStarContainer();
+            if(!sc) return;
+            const buttons = sc.querySelectorAll('button');
             buttons.forEach((b,idx)=>{ b.innerHTML = getStarSvg(idx < (to||currentStarValue)); });
         }
         function selectStar(val){ currentStarValue = val; renderStars(); document.getElementById('submitRateBtn').disabled = currentStarValue===0; }
