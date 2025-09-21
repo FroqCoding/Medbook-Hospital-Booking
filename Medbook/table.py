@@ -22,6 +22,10 @@ CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local_dev.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key') 
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 280
+}
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -531,6 +535,17 @@ def get_doctor_detail(doctor_id):
         'availability_blocks': availability_blocks,
         'availability_summary': availability_summary
     })
+
+# ----------------------
+# Health Check
+# ----------------------
+@app.route('/health')
+def health():
+    try:
+        db.session.execute(text('SELECT 1'))
+        return jsonify({'status': 'ok'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
 # ----------------------
 # Run the App
