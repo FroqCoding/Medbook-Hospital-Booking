@@ -110,6 +110,18 @@
 
     <!-- Doctors List -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+            <h2 class="text-lg font-semibold text-gray-800">Doctors</h2>
+            <div class="flex items-center gap-2">
+                <label for="sortSelect" class="text-sm text-gray-600">Sort By:</label>
+                <select id="sortSelect" class="border border-gray-300 rounded-md text-sm px-2 py-1 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="rating_desc">Rating (High → Low)</option>
+                    <option value="rating_asc">Rating (Low → High)</option>
+                    <option value="name_asc">Name (A → Z)</option>
+                    <option value="name_desc">Name (Z → A)</option>
+                </select>
+            </div>
+        </div>
         <div id="doctorsList" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
         <div id="pagination" class="flex justify-center mt-8 space-x-2"></div>
     </div>
@@ -271,7 +283,8 @@ function renderDoctors(doctors) {
                     <div class=\"ml-4\">
                         <h3 class=\"text-lg font-medium text-gray-900\">${doc.name}</h3>
                         <p class=\"text-sm text-blue-500\">${doc.speciality}</p>
-                    </div>
+                        <div class=\"mt-1 text-xs flex items-center\">${renderRatingLine(doc)}</div>
+                        </div>
                 </div>
                 <div class=\"mt-4\">
                     <div class=\"flex items-center text-sm text-gray-500\">
@@ -296,6 +309,31 @@ function renderDoctors(doctors) {
     });
     feather.replace();
     attachBookingHandlers();
+}
+
+function renderRatingLine(doc){
+    const count = doc.review_count || 0;
+    const avg = doc.avg_rating;
+    if(!count){
+        return `<span class='text-gray-400'>No reviews yet</span>`;
+    }
+    return `${renderStars(avg)}<span class='ml-1 text-gray-600'>${Number(avg).toFixed(1)} (${count})</span>`;
+}
+
+function renderStars(value){
+    const v = Number(value) || 0;
+    const full = Math.floor(v);
+    const half = (v - full) >= 0.25 && (v - full) < 0.75 ? 1 : ((v - full) >= 0.75 ? 0 : 0); // handle rounding up separately
+    const adjustedFull = (v - full) >= 0.75 ? full + 1 : full; // if >= .75 show next full star
+    const empty = 5 - adjustedFull - (half ? 1 : 0);
+    let html='';
+    const fullStar = '<svg class="w-4 h-4 text-yellow-400 fill-current inline" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+    const halfStar = '<svg class="w-4 h-4 text-yellow-400 inline" viewBox="0 0 20 20"><defs><linearGradient id="half"><stop offset="50%" stop-color="currentColor"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><path fill="url(#half)" stroke="currentColor" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+    const emptyStar = '<svg class="w-4 h-4 text-gray-300 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5c.26-.78 1.36-.78 1.62 0l1.35 4.07c.11.32.41.54.75.54h4.28c.82 0 1.16 1.05.5 1.54l-3.46 2.51c-.27.2-.39.54-.28.87l1.32 3.98c.26.78-.64 1.44-1.31.95l-3.46-2.51a.93.93 0 00-1.09 0l-3.46 2.51c-.67.49-1.57-.17-1.31-.95l1.32-3.98a.83.83 0 00-.28-.87L3.05 9.64c-.66-.49-.32-1.54.5-1.54h4.28c.34 0 .64-.22.75-.54l1.35-4.07z"/></svg>';
+    for(let i=0;i<adjustedFull;i++) html += fullStar;
+    if(half && adjustedFull <5) html += halfStar;
+    for(let i=0;i<empty;i++) html += emptyStar;
+    return html;
 }
 
 function renderPagination(totalDoctors, page) {
@@ -393,14 +431,38 @@ function applyFiltersAndPaginate() {
             return doc.availability_blocks.some(b => (b.day||'').toLowerCase() === weekday.toLowerCase());
         });
     }
+    filtered = applySorting(filtered);
     renderDoctors(getDoctorsForPage(filtered, currentPage));
     renderPagination(filtered.length, currentPage);
+}
+
+function applySorting(doctors){
+    const sortSel = document.getElementById('sortSelect');
+    if(!sortSel) return doctors;
+    const val = sortSel.value;
+    const arr = [...doctors];
+    arr.sort((a,b)=>{
+        if(val === 'rating_desc') return (b.avg_rating||0) - (a.avg_rating||0);
+        if(val === 'rating_asc') return (a.avg_rating||0) - (b.avg_rating||0);
+        if(val === 'name_asc') return (a.name||'').localeCompare(b.name||'');
+        if(val === 'name_desc') return (b.name||'').localeCompare(a.name||'');
+        return 0;
+    });
+    return arr;
 }
 
 const findBtn = document.getElementById('findDoctorsBtn');
 if (findBtn) {
     findBtn.addEventListener('click', function(e) {
         e.preventDefault();
+        currentPage = 1;
+        applyFiltersAndPaginate();
+    });
+}
+
+const sortSelect = document.getElementById('sortSelect');
+if(sortSelect){
+    sortSelect.addEventListener('change', ()=>{
         currentPage = 1;
         applyFiltersAndPaginate();
     });

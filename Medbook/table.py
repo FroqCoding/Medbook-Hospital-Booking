@@ -149,6 +149,29 @@ class Appointment(db.Model):
     reason = db.Column(db.String)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+# ----------------------
+# Doctor Review Model (existing table doctor_reviews)
+# ----------------------
+class DoctorReview(db.Model):
+    __tablename__ = 'doctor_reviews'
+    reviewid = db.Column(db.BigInteger, primary_key=True)
+    doctorid = db.Column(db.Integer, db.ForeignKey('doctors.doctorid'), nullable=False)
+    userid = db.Column(db.Integer, db.ForeignKey('users.userid'), nullable=False)
+    appointmentid = db.Column(db.Integer, db.ForeignKey('appointments.appointmentid'), nullable=False)  # newly added to support per-appointment reviews
+    rating = db.Column(db.Numeric(2,1), nullable=False)  # store as numeric(2,1); we will restrict to 1-5 whole stars
+    comments = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_json(self):
+        return {
+            'reviewid': self.reviewid,
+            'doctorid': self.doctorid,
+            'userid': self.userid,
+            'rating': float(self.rating) if self.rating is not None else None,
+            'comments': self.comments,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 # --- Ensure schema (add missing reason column if table pre-existed) ---
 from sqlalchemy import inspect, text
 
@@ -245,6 +268,16 @@ def ensure_schema():
                 try:
                     engine.execute(text(ddl))
                     print('[ensure_schema] applied:', ddl)
+                except Exception:
+                    pass
+
+        # --- doctor_reviews additive columns ---
+        if 'doctor_reviews' in insp.get_table_names():
+            review_cols = {c['name'] for c in insp.get_columns('doctor_reviews')}
+            if 'appointmentid' not in review_cols:
+                try:
+                    engine.execute(text('ALTER TABLE doctor_reviews ADD COLUMN appointmentid INTEGER REFERENCES appointments(appointmentid)'))
+                    print('[ensure_schema] Added appointmentid column to doctor_reviews')
                 except Exception:
                     pass
 
@@ -362,10 +395,19 @@ def user_profile(user_id):
 # ----------------------
 @app.route('/doctors', methods=['GET'])
 def get_doctors():
-    # Fetch all doctors
+    # Fetch all doctors with hospital
     doctors = db.session.query(
         Doctor.doctorid, Doctor.name, Doctor.speciality, Doctor.email, Doctor.phone, Hospital.name.label('hospital_name')
     ).join(Hospital, Doctor.hospitalid == Hospital.hospitalid).all()
+
+    # Preload review aggregates in one query
+    from sqlalchemy import func
+    review_rows = db.session.query(
+        DoctorReview.doctorid,
+        func.count(DoctorReview.reviewid).label('review_count'),
+        func.avg(DoctorReview.rating).label('avg_rating')
+    ).group_by(DoctorReview.doctorid).all()
+    review_map = {r.doctorid: {'review_count': int(r.review_count), 'avg_rating': float(r.avg_rating) if r.avg_rating is not None else None} for r in review_rows}
 
     # Preload all availability rows to avoid N+1 queries
     avails = DoctorAvailability.query.all()
@@ -417,7 +459,9 @@ def get_doctors():
             'phone': doc.phone,
             'hospital': doc.hospital_name,
             'availability_summary': summary,
-            'availability_blocks': availability_blocks
+            'availability_blocks': availability_blocks,
+            'review_count': review_map.get(doc.doctorid, {}).get('review_count', 0),
+            'avg_rating': review_map.get(doc.doctorid, {}).get('avg_rating')
         })
     return jsonify(result)
 
@@ -551,8 +595,12 @@ def get_user_appointments(user_id):
         return json_error('User not found', 404)
     from sqlalchemy import asc
     q = db.session.query(Appointment, Doctor, Hospital).join(Doctor, Appointment.doctorid==Doctor.doctorid).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Appointment.userid==user_id).order_by(asc(Appointment.appointment_date), asc(Appointment.appointment_time)).all()
+    # Preload reviews for this user's appointments to avoid N+1
+    reviews = DoctorReview.query.filter_by(userid=user_id).all()
+    rev_by_appt = {r.appointmentid: r for r in reviews if getattr(r,'appointmentid',None) is not None}
     results = []
     for appt, doc, hosp in q:
+        rev = rev_by_appt.get(appt.appointmentid)
         results.append({
             'appointmentid': appt.appointmentid,
             'doctorid': appt.doctorid,
@@ -562,7 +610,10 @@ def get_user_appointments(user_id):
             'status': appt.status,
             'doctor_name': doc.name,
             'speciality': doc.speciality,
-            'hospital': hosp.name
+            'hospital': hosp.name,
+            'has_review': bool(rev),
+            'user_rating': float(rev.rating) if rev and rev.rating is not None else None,
+            'user_comments': rev.comments if rev else None
         })
     return jsonify(results)
 
@@ -579,6 +630,50 @@ def cancel_appointment(appointment_id):
     appt.status = False
     db.session.commit()
     return jsonify({'message': 'Appointment cancelled', 'appointmentid': appt.appointmentid, 'status': appt.status})
+
+# ----------------------
+# Submit / Update Rating for an Appointment
+# ----------------------
+@app.route('/appointments/<int:appointment_id>/rating', methods=['POST'])
+def rate_appointment(appointment_id):
+    appt = Appointment.query.get(appointment_id)
+    if not appt:
+        return json_error('Appointment not found', 404)
+    # Prevent rating future / cancelled appointments
+    today = date.today()
+    if appt.status is False:
+        return json_error('Cannot rate a cancelled appointment', 400)
+    if appt.appointment_date >= today:
+        return json_error('Can only rate a completed (past) appointment', 400)
+    data = request.get_json() or {}
+    if 'rating' not in data:
+        return json_error('rating required', 400)
+    try:
+        rating_val = float(data['rating'])
+    except (TypeError, ValueError):
+        return json_error('rating must be a number', 400)
+    if rating_val < 1 or rating_val > 5:
+        return json_error('rating must be between 1 and 5', 400)
+    # Support half-stars: round to nearest 0.5
+    rating_val = round(rating_val * 2) / 2.0
+    comments = (data.get('comment') or data.get('comments') or '').strip() or None
+    # One review per appointment now that appointmentid column exists
+    existing = DoctorReview.query.filter_by(appointmentid=appointment_id).first()
+    if existing:
+        existing.rating = rating_val
+        existing.comments = comments
+        existing.created_at = datetime.utcnow()
+        action = 'updated'
+    else:
+        rev = DoctorReview(userid=appt.userid, doctorid=appt.doctorid, appointmentid=appointment_id, rating=rating_val, comments=comments)
+        db.session.add(rev)
+        action = 'created'
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return json_error('database error saving rating', 500, error=str(e))
+    return jsonify({'message': f'rating {action}', 'doctorid': appt.doctorid, 'userid': appt.userid, 'appointmentid': appointment_id, 'rating': rating_val, 'comments': comments})
 
 # ----------------------
 # Debug endpoint to show users schema
@@ -620,6 +715,12 @@ def get_doctor_detail(doctor_id):
     if not doc:
         return json_error('Doctor not found', 404)
     doctor, hospital = doc
+    from sqlalchemy import func
+    agg = db.session.query(
+        func.count(DoctorReview.reviewid), func.avg(DoctorReview.rating)
+    ).filter(DoctorReview.doctorid==doctor_id).first()
+    review_count = int(agg[0]) if agg and agg[0] is not None else 0
+    avg_rating = float(agg[1]) if agg and agg[1] is not None else None
     # Gather availability
     from collections import defaultdict
     rows = DoctorAvailability.query.filter_by(doctorid=doctor_id).all()
@@ -655,7 +756,9 @@ def get_doctor_detail(doctor_id):
         'phone': doctor.phone,
         'hospital': hospital.name,
         'availability_blocks': availability_blocks,
-        'availability_summary': availability_summary
+        'availability_summary': availability_summary,
+        'review_count': review_count,
+        'avg_rating': avg_rating
     })
 
 # ----------------------

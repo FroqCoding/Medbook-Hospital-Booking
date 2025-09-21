@@ -71,14 +71,7 @@
                             <img class="h-32 w-32 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Doctor" />
                             <h3 class="mt-4 text-xl font-medium text-gray-900" data-doc-name>Doctor</h3>
                             <p class="text-sm text-blue-500" data-doc-speciality>Speciality</p>
-                            <div class="flex text-yellow-400 mt-1">
-                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
-                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
-                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
-                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
-                                <i data-feather="star" class="h-4 w-4 fill-current"></i>
-                                <span class="text-gray-500 text-xs ml-1">(48 reviews)</span>
-                            </div>
+                            <div id="ratingSummary" class="flex items-center mt-1 text-xs text-gray-500"></div>
                         </div>
                         <div class="mt-6">
                             <h4 class="text-sm font-medium text-gray-900">Contact Information</h4>
@@ -213,8 +206,34 @@
                 });
                 bookBtn.addEventListener('click', ()=>{ window.location.href = 'booking.html?' + params.toString(); });
             }
+            // Rating summary
+            const ratingEl = document.getElementById('ratingSummary');
+            if(ratingEl){
+                const count = doc.review_count || 0;
+                const avg = doc.avg_rating;
+                if(!count){
+                    ratingEl.innerHTML = `<span class='text-gray-400'>No reviews yet</span>`;
+                } else {
+                    ratingEl.innerHTML = `${renderStars(avg)}<span class='ml-1 text-gray-600'>${Number(avg).toFixed(1)} (${count})</span>`;
+                }
+            }
         }
         document.addEventListener('DOMContentLoaded', loadDoctor);
+        function renderStars(value){
+            const v = Number(value) || 0;
+            const full = Math.floor(v);
+            const half = (v - full) >= 0.25 && (v - full) < 0.75 ? 1 : ((v - full) >= 0.75 ? 0 : 0);
+            const adjustedFull = (v - full) >= 0.75 ? full + 1 : full;
+            const empty = 5 - adjustedFull - (half ? 1 : 0);
+            let html='';
+            const fullStar = '<svg class="w-4 h-4 text-yellow-400 fill-current inline" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            const halfStar = '<svg class="w-4 h-4 text-yellow-400 inline" viewBox="0 0 20 20"><defs><linearGradient id="halfProfile"><stop offset="50%" stop-color="currentColor"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><path fill="url(#halfProfile)" stroke="currentColor" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            const emptyStar = '<svg class="w-4 h-4 text-gray-300 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5c.26-.78 1.36-.78 1.62 0l1.35 4.07c.11.32.41.54.75.54h4.28c.82 0 1.16 1.05.5 1.54l-3.46 2.51c-.27.2-.39.54-.28.87l1.32 3.98c.26.78-.64 1.44-1.31.95l-3.46-2.51a.93.93 0 00-1.09 0l-3.46 2.51c-.67.49-1.57-.17-1.31-.95l1.32-3.98a.83.83 0 00-.28-.87L3.05 9.64c-.66-.49-.32-1.54.5-1.54h4.28c.34 0 .64-.22.75-.54l1.35-4.07z"/></svg>';
+            for(let i=0;i<adjustedFull;i++) html += fullStar;
+            if(half && adjustedFull <5) html += halfStar;
+            for(let i=0;i<empty;i++) html += emptyStar;
+            return html;
+        }
     </script>
 </body>
 </html>
