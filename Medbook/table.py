@@ -16,12 +16,12 @@ CORS(app)
 # ----------------------
 # Configuration (updated for Render env vars & production enforcement)
 # ----------------------
-# We want to ensure that on Render (RENDER env var present) we NEVER silently
-# fall back to a local sqlite database because that causes data loss & confusion.
-# In local development (RENDER not set) we allow sqlite fallback.
+# Goal: Prevent accidental sqlite usage in production (Render). Strengthen
+# detection & require explicit opt-in for sqlite fallback via ALLOW_SQLITE_FALLBACK=1.
 
 possible_db_vars = [
-    'DATABASE_URL','DB_URL','POSTGRES_URL','POSTGRES_URI','DATABASE_URI'
+    'DATABASE_URL','DB_URL','POSTGRES_URL','POSTGRES_URI','DATABASE_URI',
+    'MEDBOOK_DB','MEDBOOK_DATABASE_URL'
 ]
 raw_db_url = None
 for _v in possible_db_vars:
@@ -36,6 +36,21 @@ render_markers = [
 ]
 on_render = any(os.getenv(k) for k in render_markers)
 
+# Additional heuristic detection: many Render services run under /opt/render/*
+_fs_detect_reasons = []
+try:
+    cwd = os.getcwd()
+    if cwd.startswith('/opt/render'):
+        _fs_detect_reasons.append(f"cwd:{cwd}")
+    if os.path.exists('/opt/render'):  # base directory present in container
+        _fs_detect_reasons.append('path:/opt/render')
+except Exception:
+    pass
+if not on_render and _fs_detect_reasons:
+    on_render = True
+
+ALLOW_SQLITE_FALLBACK = os.getenv('ALLOW_SQLITE_FALLBACK') == '1'
+
 # Normalize older postgres:// URI to postgresql:// for SQLAlchemy compatibility.
 if raw_db_url and raw_db_url.startswith('postgres://'):
     raw_db_url = raw_db_url.replace('postgres://','postgresql://',1)
@@ -45,18 +60,20 @@ if raw_db_url and raw_db_url.startswith('postgres://'):
 if raw_db_url and raw_db_url.startswith('postgresql://') and '+psycopg://' not in raw_db_url:
     raw_db_url = raw_db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
-# Disallow implicit fallback: require DATABASE_URL always.
+# Disallow implicit fallback in production. Only allow sqlite if explicitly opted-in.
 if not raw_db_url:
-    if on_render:
+    missing_msg = ('No database URL environment variable found among: ' + ', '.join(possible_db_vars))
+    if on_render or not ALLOW_SQLITE_FALLBACK:
         env_keys_preview = ','.join(sorted(k for k in os.environ.keys() if k.startswith('RENDER')))
         raise RuntimeError(
-            'DATABASE_URL (or DB_URL/POSTGRES_URL/POSTGRES_URI/DATABASE_URI) is not set. '
-            'Add your Postgres connection string in the Render dashboard. '
-            f'Render detected={on_render}. Render-related envs: {env_keys_preview or "<none>"}'
+            missing_msg + '. ' +
+            ('Set DATABASE_URL in the platform dashboard. ' if on_render else 'Set one locally or export ALLOW_SQLITE_FALLBACK=1 for dev sqlite. ') +
+            f'RenderDetected={on_render} RenderEnvKeys=[{env_keys_preview or "<none>"}] '
+            f'Heuristics={";".join(_fs_detect_reasons) or "none"}'
         )
-    else:
-        raw_db_url = 'sqlite:///local_dev.db'
-        print('[startup] WARNING: No DATABASE_URL found; using local sqlite:///local_dev.db (development only)')
+    # Development explicit fallback
+    raw_db_url = 'sqlite:///local_dev.db'
+    print('[startup] DEV SQLITE FALLBACK: using sqlite:///local_dev.db (set a DB URL or unset ALLOW_SQLITE_FALLBACK to force error)')
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key')
@@ -64,7 +81,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 280
 }
-print(f"[startup] Using database URL: {app.config['SQLALCHEMY_DATABASE_URI']} (on_render={on_render})")
+print(f"[startup] Using database URL: {app.config['SQLALCHEMY_DATABASE_URI']} (on_render={on_render} heuristics={_fs_detect_reasons} allow_sqlite={ALLOW_SQLITE_FALLBACK})")
 
 # If somehow sqlite slipped through in what looks like production, abort loudly.
 if on_render and app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:'):
@@ -689,9 +706,12 @@ def debug_env():
             pass
     return jsonify({
         'render_detected': on_render,
+        'render_detection_heuristics': _fs_detect_reasons,
         'db_url_redacted': redacted,
         'db_driver': app.config['SQLALCHEMY_DATABASE_URI'].split(':',1)[0],
-        'db_env_vars_seen': list(seen.keys())
+        'db_env_vars_seen': list(seen.keys()),
+        'allow_sqlite_fallback': ALLOW_SQLITE_FALLBACK,
+        'possible_db_vars': possible_db_vars
     })
 
 # ----------------------
