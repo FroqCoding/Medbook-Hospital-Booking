@@ -65,25 +65,29 @@
             <!-- Progress Bar -->
             <div class="mb-8" id="progressWrapper">
                 <div class="flex justify-between items-center" id="progressBar">
-                    <div class="flex items-center step-indicator" data-step="1">
+                    <div class="flex items-center step-indicator space-x-2" data-step="1">
                         <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-blue-500 text-white">
                             <span class="text-sm font-medium">1</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium step-label text-gray-900">Personal Info</div>
+                        <div class="text-sm font-medium step-label text-gray-900">Personal Info</div>
                     </div>
-                    <div class="hidden sm:block w-1/4 h-0.5 mx-2 step-connector bg-gray-200" data-connector="1"></div>
-                    <div class="flex items-center step-indicator" data-step="2">
+                    <div class="hidden sm:block flex-1 h-0.5 mx-4 step-connector bg-gray-200 relative overflow-hidden" data-connector="1">
+                        <span class="absolute left-0 top-0 h-full bg-blue-500 transition-[width] duration-500 ease-in-out connector-fill" style="width:0%"></span>
+                    </div>
+                    <div class="flex items-center step-indicator space-x-2" data-step="2">
                         <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-gray-200 text-gray-500">
                             <span class="text-sm font-medium">2</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium step-label text-gray-500">Professional Info</div>
+                        <div class="text-sm font-medium step-label text-gray-500">Professional Info</div>
                     </div>
-                    <div class="hidden sm:block w-1/4 h-0.5 mx-2 step-connector bg-gray-200" data-connector="2"></div>
-                    <div class="flex items-center step-indicator" data-step="3">
+                    <div class="hidden sm:block flex-1 h-0.5 mx-4 step-connector bg-gray-200 relative overflow-hidden" data-connector="2">
+                        <span class="absolute left-0 top-0 h-full bg-blue-500 transition-[width] duration-500 ease-in-out connector-fill" style="width:0%"></span>
+                    </div>
+                    <div class="flex items-center step-indicator space-x-2" data-step="3">
                         <div class="flex-shrink-0 rounded-full h-8 w-8 flex items-center justify-center step-circle bg-gray-200 text-gray-500">
                             <span class="text-sm font-medium">3</span>
                         </div>
-                        <div class="ml-2 text-sm font-medium step-label text-gray-500">Availability</div>
+                        <div class="text-sm font-medium step-label text-gray-500">Availability</div>
                     </div>
                 </div>
             </div>
@@ -236,9 +240,9 @@
     </div>
 
     <!-- Footer -->
-    <footer class="mt-auto bg-white border-t border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center">
-            <p class="text-xs text-gray-500">&copy; 2025 MedBook. All rights reserved.</p>
+<footer class="bg-gray-800">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-base text-gray-400">&copy; 2025 MedBook. All rights reserved.</p>
         </div>
     </footer>
 
@@ -275,12 +279,17 @@
             // connectors
             document.querySelectorAll('.step-connector').forEach(conn => {
                 const idx = parseInt(conn.getAttribute('data-connector'));
+                const fill = conn.querySelector('.connector-fill');
+                if (!fill) return;
                 if (idx < activeStep) {
-                    conn.classList.remove('bg-gray-200');
-                    conn.classList.add('bg-blue-500');
+                    // fully filled for completed connector
+                    requestAnimationFrame(()=>{fill.style.width='100%';});
+                } else if (idx === activeStep - 1) {
+                    // transitioning just completed
+                    requestAnimationFrame(()=>{fill.style.width='100%';});
                 } else {
-                    conn.classList.remove('bg-blue-500');
-                    conn.classList.add('bg-gray-200');
+                    // upcoming connectors empty
+                    requestAnimationFrame(()=>{fill.style.width='0%';});
                 }
             });
         }
