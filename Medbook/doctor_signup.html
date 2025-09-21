@@ -20,6 +20,10 @@
         .form-step.active {
             display: block;
         }
+        /* Progress animation refinements */
+        .step-circle { transition: background-color .35s ease, transform .35s ease; }
+        .step-circle.active-step { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        .step-label { transition: color .35s ease; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -259,21 +263,24 @@
                 const step = parseInt(el.getAttribute('data-step'));
                 const circle = el.querySelector('.step-circle');
                 const label = el.querySelector('.step-label');
-                // Reset
-                circle.classList.remove('bg-blue-500','text-white');
+                // Reset state
+                circle.classList.remove('bg-blue-500','text-white','active-step');
                 circle.classList.add('bg-gray-200','text-gray-500');
-                label.classList.remove('text-gray-900');
+                label.classList.remove('text-blue-600','text-blue-700','font-semibold','text-gray-900');
                 label.classList.add('text-gray-500');
-                if (step === activeStep) {
-                    circle.classList.remove('bg-gray-200','text-gray-500');
-                    circle.classList.add('bg-blue-500','text-white');
-                    label.classList.remove('text-gray-500');
-                    label.classList.add('text-gray-900');
-                } else if (step < activeStep) {
+
+                if (step < activeStep) {
+                    // Completed
                     circle.classList.remove('bg-gray-200','text-gray-500');
                     circle.classList.add('bg-blue-500','text-white');
                     label.classList.remove('text-gray-500');
                     label.classList.add('text-blue-600');
+                } else if (step === activeStep) {
+                    // Active step
+                    circle.classList.remove('bg-gray-200','text-gray-500');
+                    circle.classList.add('bg-blue-500','text-white','active-step');
+                    label.classList.remove('text-gray-500');
+                    label.classList.add('text-blue-700','font-semibold');
                 }
             });
             // connectors
