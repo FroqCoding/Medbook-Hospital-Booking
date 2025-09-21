@@ -280,6 +280,16 @@ def ensure_schema():
                     print('[ensure_schema] Added appointmentid column to doctor_reviews')
                 except Exception:
                     pass
+        # --- performance indexes (Postgres only) ---
+        if backend == 'postgresql':
+            try:
+                engine.execute(text('CREATE INDEX IF NOT EXISTS idx_appointments_user_date ON appointments (userid, appointment_date)'))
+            except Exception:
+                pass
+            try:
+                engine.execute(text('CREATE INDEX IF NOT EXISTS idx_doctor_reviews_user_appt ON doctor_reviews (userid, appointmentid)'))
+            except Exception:
+                pass
 
 """Auto-create base tables if missing, then apply incremental ensure_schema adjustments.
 
@@ -590,17 +600,32 @@ def debug_db():
 # ----------------------
 @app.route('/users/<int:user_id>/appointments', methods=['GET'])
 def get_user_appointments(user_id):
+    try:
+        print(f"[appointments] incoming request for user {user_id}")
+    except Exception:
+        pass
     user = User.query.get(user_id)
     if not user:
         return json_error('User not found', 404)
     from sqlalchemy import asc
-    q = db.session.query(Appointment, Doctor, Hospital).join(Doctor, Appointment.doctorid==Doctor.doctorid).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Appointment.userid==user_id).order_by(asc(Appointment.appointment_date), asc(Appointment.appointment_time)).all()
-    # Preload reviews for this user's appointments to avoid N+1
-    reviews = DoctorReview.query.filter_by(userid=user_id).all()
-    rev_by_appt = {r.appointmentid: r for r in reviews if getattr(r,'appointmentid',None) is not None}
+    # Single query with LEFT OUTER JOIN to doctor_reviews for this user
+    q = (
+        db.session.query(
+            Appointment,
+            Doctor,
+            Hospital,
+            DoctorReview.rating.label('r_rating'),
+            DoctorReview.comments.label('r_comments')
+        )
+        .join(Doctor, Appointment.doctorid==Doctor.doctorid)
+        .join(Hospital, Doctor.hospitalid==Hospital.hospitalid)
+        .outerjoin(DoctorReview, (DoctorReview.appointmentid==Appointment.appointmentid) & (DoctorReview.userid==user_id))
+        .filter(Appointment.userid==user_id)
+        .order_by(asc(Appointment.appointment_date), asc(Appointment.appointment_time))
+        .all()
+    )
     results = []
-    for appt, doc, hosp in q:
-        rev = rev_by_appt.get(appt.appointmentid)
+    for appt, doc, hosp, r_rating, r_comments in q:
         results.append({
             'appointmentid': appt.appointmentid,
             'doctorid': appt.doctorid,
@@ -611,10 +636,14 @@ def get_user_appointments(user_id):
             'doctor_name': doc.name,
             'speciality': doc.speciality,
             'hospital': hosp.name,
-            'has_review': bool(rev),
-            'user_rating': float(rev.rating) if rev and rev.rating is not None else None,
-            'user_comments': rev.comments if rev else None
+            'has_review': r_rating is not None,
+            'user_rating': float(r_rating) if r_rating is not None else None,
+            'user_comments': r_comments
         })
+    try:
+        print(f"[appointments] user {user_id} returning {len(results)} rows")
+    except Exception:
+        pass
     return jsonify(results)
 
 # ----------------------
@@ -706,6 +735,16 @@ def serve_page(page):
         return send_from_directory(_FRONTEND_DIR, page)
     return ("Not Found", 404)
 
+
+# Lightweight favicon to avoid noisy 404s in logs/browsers
+@app.route('/favicon.ico')
+def favicon():
+    # Tiny 1x1 transparent PNG (base64 decoded) to keep it simple
+    from base64 import b64decode
+    from flask import Response
+    png_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mP8/x8AAwMB/er+3T0AAAAASUVORK5CYII='
+    data = b64decode(png_base64)
+    return Response(data, mimetype='image/png')
 # ----------------------
 # Doctor detail with availability
 # ----------------------
