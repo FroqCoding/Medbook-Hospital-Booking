@@ -16,7 +16,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,7 +42,7 @@
     </nav>
 
         <!-- Login Content with Doctor Promo Panel -->
-        <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="flex-grow flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div class="mx-auto w-full max-w-7xl">
                 <div class="grid gap-10 lg:grid-cols-3 items-stretch">
                     <!-- Auth Column -->
@@ -233,6 +233,13 @@
     <div id="errorNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 bg-opacity-90 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
         Wrong credentials, Please try again
     </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto bg-white border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-center">
+            <p class="text-xs text-gray-500">&copy; 2025 MedBook. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script>
         feather.replace();
