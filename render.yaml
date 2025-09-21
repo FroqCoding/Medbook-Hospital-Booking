@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: medbook
+    env: python
+    plan: free
+    rootDir: Medbook
+    buildCommand: pip install -r ../requirements.txt || pip install -r requirements.txt
+    startCommand: python -m waitress --listen=0.0.0.0:$PORT table:app
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
