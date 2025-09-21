@@ -323,13 +323,23 @@
         fetchProfile();
 
         // Edit Profile Modal Functionality
-        document.getElementById('editProfileBtn').addEventListener('click', function() {
-            document.getElementById('editProfileModal').classList.remove('hidden');
-        });
-        document.getElementById('cancelEditBtn').addEventListener('click', function() {
-            document.getElementById('editProfileModal').classList.add('hidden');
-        });
-        document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+        // Defensive guards (prevent early null errors halting rest of script)
+        const editProfileBtnEl = document.getElementById('editProfileBtn');
+        if(editProfileBtnEl){
+            editProfileBtnEl.addEventListener('click', function() {
+                const modal = document.getElementById('editProfileModal');
+                if(modal) modal.classList.remove('hidden');
+            });
+        } else { console.warn('[profile] editProfileBtn missing'); }
+        const cancelEditBtnEl = document.getElementById('cancelEditBtn');
+        if(cancelEditBtnEl){
+            cancelEditBtnEl.addEventListener('click', function() {
+                const modal = document.getElementById('editProfileModal');
+                if(modal) modal.classList.add('hidden');
+            });
+        } else { console.warn('[profile] cancelEditBtn missing'); }
+        const saveProfileBtnEl = document.getElementById('saveProfileBtn');
+        if(saveProfileBtnEl) saveProfileBtnEl.addEventListener('click', async function() {
             // Save to backend
             const updated = {
                 name: document.getElementById('editFirstName').value + ' ' + document.getElementById('editLastName').value,
@@ -374,14 +384,34 @@
             }
         });
 
+        console.log('[profile] Script version 2025-09-21/debug2 starting');
         async function fetchAppointments(){
+            console.log('[profile] fetchAppointments invoked');
             if(!userId) return;            
             const container = document.getElementById('appointmentsContainer');
             const emptyMsg = document.getElementById('noAppointmentsMsg');
             emptyMsg.textContent='Loading appointments...';
             try {
-                const res = await fetch(`${apiBase}/users/${userId}/appointments`);
-                if(!res.ok){ emptyMsg.textContent='Failed to load appointments.'; return; }
+                // Add a timeout to avoid indefinite loading UI
+                const controller = new AbortController();
+                const timeout = setTimeout(()=> controller.abort(), 8000);
+                let res;
+                try {
+                    res = await fetch(`${apiBase}/users/${userId}/appointments`, { signal: controller.signal });
+                } catch(fetchErr){
+                    if(fetchErr.name === 'AbortError'){
+                        emptyMsg.textContent = 'Request timed out. '; 
+                        const retryBtn = document.createElement('button');
+                        retryBtn.className='text-blue-600 underline text-xs ml-1';
+                        retryBtn.textContent='Retry';
+                        retryBtn.addEventListener('click', fetchAppointments);
+                        emptyMsg.appendChild(retryBtn);
+                        return;
+                    } else {
+                        throw fetchErr;
+                    }
+                } finally { clearTimeout(timeout); }
+                if(!res.ok){ emptyMsg.textContent='Failed to load appointments.'; console.warn('[profile] appointments fetch failed status', res.status); return; }
                 let appts = await res.json();
                 if(!appts.length){ emptyMsg.textContent='No upcoming appointments'; return; }
                 // Determine completed (past date) and keep cancelled separate
@@ -433,7 +463,6 @@
                         ${escapeHtml(a.hospital)}
                     </div>
                     ${a.reason ? `<div class='mt-2 text-xs text-gray-500'>Reason: ${escapeHtml(a.reason)}</div>`: ''}
-                    <div class="mt-3 flex justify-end">${showRateBtn ? `<button data-id="${a.appointmentid}" data-doctor="${escapeHtml(a.doctor_name)}" data-speciality="${escapeHtml(a.speciality)}" class="rate-btn bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded mr-2">Rate Appointment</button>`: ''}${(!a._isCancelled && !a._isCompleted) ? `<button data-id="${a.appointmentid}" class="cancel-btn bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">Cancel Appointment</button>` : ''}</div>
                         <div class="mt-3 flex justify-end">${showRateBtn ? `<button data-id="${a.appointmentid}" data-doctor="${escapeHtml(a.doctor_name)}" data-speciality="${escapeHtml(a.speciality)}" class="rate-btn bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded mr-2">${a.has_review ? 'Edit Rating' : 'Rate Appointment'}</button>`: ''}${(!a._isCancelled && !a._isCompleted) ? `<button data-id="${a.appointmentid}" class="cancel-btn bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">Cancel Appointment</button>` : ''}</div>
                 </div>`;
                 });
@@ -452,7 +481,8 @@
                         openRatingModal(id, doctor, speciality);
                     });
                 });
-            } catch(e){ console.error(e); emptyMsg.textContent='Error loading appointments.'; }
+                console.log('[profile] Rendered appointments count:', appts.length);
+            } catch(e){ console.error('[profile] appointments error', e); emptyMsg.textContent='Error loading appointments.'; }
         }
 
         function formatApptDate(d){ try { return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});} catch { return d; } }
@@ -517,12 +547,16 @@
             modal.classList.add('hidden');
             modal.setAttribute('aria-hidden','true');
         }
-        document.getElementById('cancelRateBtn').addEventListener('click', closeRateModal);
-        document.getElementById('closeRateModalBtn').addEventListener('click', closeRateModal);
-        document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ const m=document.getElementById('rateModal'); if(!m.classList.contains('hidden')) closeRateModal(); }});
-        document.getElementById('rateModal').addEventListener('click', (e)=>{ if(e.target.id==='rateModal') closeRateModal(); });
+        const cancelRateBtn = document.getElementById('cancelRateBtn');
+        if(cancelRateBtn) cancelRateBtn.addEventListener('click', closeRateModal);
+        const closeRateModalBtn = document.getElementById('closeRateModalBtn');
+        if(closeRateModalBtn) closeRateModalBtn.addEventListener('click', closeRateModal);
+        document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ const m=document.getElementById('rateModal'); if(m && !m.classList.contains('hidden')) closeRateModal(); }});
+        const rateModalEl = document.getElementById('rateModal');
+        if(rateModalEl) rateModalEl.addEventListener('click', (e)=>{ if(e.target.id==='rateModal') closeRateModal(); });
 
-        document.getElementById('submitRateBtn').addEventListener('click', async ()=>{
+        const submitRateBtn = document.getElementById('submitRateBtn');
+        if(submitRateBtn) submitRateBtn.addEventListener('click', async ()=>{
             const appointmentId = document.getElementById('rateAppointmentId').value;
             const comment = document.getElementById('rateComment').value.trim();
             const rating = currentStarValue;
@@ -567,7 +601,11 @@
         }
 
     // Initial fetch of appointments
-    fetchAppointments();
+    // Invoke initial fetch (guard against multiple executions)
+    if(!window.__appointmentsLoadedOnce){
+        fetchAppointments();
+        window.__appointmentsLoadedOnce = true;
+    }
 
         // Modal logic for cancelling appointments
         let pendingCancelId = null;
