@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Sign Up - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
+                    </div>
+                </div>
+                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Hospitals</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="#" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="bg-white">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:py-16 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl" data-aos="fade-up">
+                    Join MedBook as a Doctor
+                </h1>
+                <p class="mt-4 max-w-xl mx-auto text-base text-gray-500" data-aos="fade-up" data-aos-delay="100">
+                    Reach more patients and manage your appointments efficiently with our platform.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Up Form -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <div class="bg-white shadow rounded-lg p-6">
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-blue-500 rounded-full h-8 w-8 flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">1</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-gray-900">Personal Info</div>
+                    </div>
+                    <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center">
+                            <span class="text-gray-500 text-sm font-medium">2</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-gray-500">Professional Info</div>
+                    </div>
+                    <div class="hidden sm:block w-1/4 h-0.5 bg-gray-200 mx-2"></div>
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center">
+                            <span class="text-gray-500 text-sm font-medium">3</span>
+                        </div>
+                        <div class="ml-2 text-sm font-medium text-gray-500">Availability</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="doctorSignupForm">
+                <!-- Step 1: Personal Information -->
+                <div class="form-step active" id="step1">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="firstName" class="block text-sm font-medium text-gray-700">First Name</label>
+                            <input type="text" id="firstName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+                            <input type="text" id="lastName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" id="phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
+                            <select id="gender" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option>Select Gender</option>
+                                <option>Male</option>
+                                <option>Female</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                            <input type="date" id="dob" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end">
+                        <button type="button" onclick="nextStep(1)" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Next Step
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Professional Information -->
+                <div class="form-step" id="step2">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Professional Information</h2>
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="medicalLicense" class="block text-sm font-medium text-gray-700">Medical License Number</label>
+                            <input type="text" id="medicalLicense" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="specialty" class="block text-sm font-medium text-gray-700">Specialty</label>
+                            <select id="specialty" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option>Select Specialty</option>
+                                <option>Cardiology</option>
+                                <option>Dermatology</option>
+                                <option>Endocrinology</option>
+                                <option>Gastroenterology</option>
+                                <option>Neurology</option>
+                                <option>Orthopedics</option>
+                                <option>Pediatrics</option>
+                                <option>Psychiatry</option>
+                                <option>OB-GYN</option>
+                                <option>Urology</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="experience" class="block text-sm font-medium text-gray-700">Years of Experience</label>
+                            <input type="number" id="experience" min="0" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="hospital" class="block text-sm font-medium text-gray-700">Primary Hospital/Clinic</label>
+                            <input type="text" id="hospital" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="bio" class="block text-sm font-medium text-gray-700">Professional Bio</label>
+                            <textarea id="bio" rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" onclick="prevStep(2)" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Previous
+                        </button>
+                        <button type="button" onclick="nextStep(2)" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Next Step
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Availability -->
+                <div class="form-step" id="step3">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Availability</h2>
+                    
+                    <!-- Days selection in a row -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Select Your Working Days</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="sunday">Sun</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="monday">Mon</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="tuesday">Tue</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="wednesday">Wed</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="thursday">Thu</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="friday">Fri</button>
+                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="saturday">Sat</button>
+                        </div>
+                        <input type="hidden" id="selectedDays" name="selectedDays">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="startTime" class="block text-sm font-medium text-gray-700">Start Time</label>
+                            <input type="time" id="startTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="endTime" class="block text-sm font-medium text-gray-700">End Time</label>
+                            <input type="time" id="endTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button type="button" id="addAvailability" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i data-feather="plus" class="mr-2 h-4 w-4"></i>
+                            Add Availability
+                        </button>
+                    </div>
+                    
+                    <!-- Display added availabilities -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Your Availability</h3>
+                        <div id="availabilityList" class="space-y-3">
+                            <!-- Added availabilities will appear here -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" onclick="prevStep(3)" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Previous
+                        </button>
+                        <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Complete Registration
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Company</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">About</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Press</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Patients</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="index.html" class="text-base text-gray-400 hover:text-white">Find a Doctor</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Hospitals</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Specialties</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">FAQs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Doctors</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="doctor-signup.html" class="text-base text-gray-400 hover:text-white">Join as Doctor</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">For Doctors</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Resources</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Support</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Legal</h3>
+                    <ul class="mt-4 space-y-4">
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Privacy</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Terms</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">Security</a></li>
+                        <li><a href="#" class="text-base text-gray-400 hover:text-white">HIPAA</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-700 pt-8 md:flex md:items-center md:justify-between">
+                <div class="flex space-x-6 md:order-2">
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i data-feather="facebook" class="h-6 w-6"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i data-feather="instagram" class="h-6 w-6"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i data-feather="twitter" class="h-6 w-6"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i data-feather="linkedin" class="h-6 w-6"></i>
+                    </a>
+                </div>
+                <p class="mt-8 text-base text-gray-400 md:mt-0 md:order-1">
+                    &copy; 2023 MedBook. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+        feather.replace();
+
+        function nextStep(currentStep) {
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('step' + (currentStep + 1)).classList.add('active');
+        }
+
+        function prevStep(currentStep) {
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('step' + (currentStep - 1)).classList.add('active');
+        }
+
+        document.getElementById('doctorSignupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Doctor registration submitted successfully! Our team will review your information and contact you shortly.');
+        });
+    </script>
+</body>
+</html>
