@@ -77,42 +77,34 @@
         </div>
     </div>
 
-    <!-- Search Filters -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div class="bg-gray-100 shadow rounded-lg p-6">
-            <div class="grid gap-4 md:grid-cols-4" id="filtersGrid">
-                <div class="relative">
-                    <label for="specialty-filter" class="absolute -top-3 left-1 text-[10px] font-semibold text-gray-600 tracking-wide uppercase bg-gray-100 px-1 rounded">Specialty</label>
-                    <select aria-label="Specialty" id="specialty-filter" class="mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white"></select>
+    <!-- Search Section (Copied from index for identical look) -->
+    <div id="search" class="bg-white py-12 px-4 sm:px-6 lg:px-8 -mt-8 mb-4" data-aos="fade-up">
+        <div class="max-w-3xl mx-auto bg-gray-50 rounded-xl shadow-md overflow-hidden p-6 relative pb-28 md:pb-24">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                    <label for="specialty" class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                    <select id="specialty" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                        <option value="">Select a specialty</option>
+                    </select>
                 </div>
-                <div class="relative">
-                    <label for="hospital-filter" class="absolute -top-3 left-1 text-[10px] font-semibold text-gray-600 tracking-wide uppercase bg-gray-100 px-1 rounded">Hospital</label>
-                    <select aria-label="Hospital" id="hospital-filter" class="mt-0 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white"></select>
+                <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                    <label for="hospital" class="block text-sm font-medium text-gray-700 mb-1">Hospital</label>
+                    <select id="hospital" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                        <option value="">Select a hospital</option>
+                    </select>
                 </div>
-                <div class="relative">
-                    <label for="date-filter" class="absolute -top-3 left-1 text-[10px] font-semibold text-gray-600 tracking-wide uppercase bg-gray-100 px-1 rounded">Date</label>
-                    <div class="relative group">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                            <i data-feather="calendar" class="h-4 w-4"></i>
-                        </span>
-                        <input aria-label="Date" type="date" id="date-filter" placeholder="YYYY-MM-DD" class="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white" />
-                    </div>
-                    <p class="mt-1 text-[11px] text-gray-400 md:hidden">Optional: filter by a specific date</p>
-                </div>
-                <div class="flex md:block items-end pt-2 md:pt-0">
-                    <div class="flex items-center justify-center h-full">
-                    <button id="applyFiltersBtn" type="button" class="w-full md:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                        <i data-feather="search" class="mr-2 h-4 w-4"></i>
-                        <span class="md:inline">Apply Filters</span>
-                    </button>
-                </div>
+                <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="date" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md" placeholder="YYYY-MM-DD">
+                    <p class="mt-2 text-[11px] text-gray-400 md:hidden" id="dateHelper">Choose an optional target date</p>
                 </div>
             </div>
-            <style>
-                @media (max-width: 767px){
-                    #filtersGrid select, #filtersGrid input{background:#f3f4f6;}
-                }
-            </style>
+            <div class="absolute bottom-4 left-0 w-full flex justify-center px-2">
+              <button id="findDoctorsBtn" type="button" class="inline-flex items-center justify-center w-full md:w-auto md:min-w-[250px] px-5 py-2.5 md:py-3 border border-transparent text-sm md:text-base font-medium rounded-md text-white bg-primary hover:bg-blue-700 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition">
+                  <i data-feather="search" class="mr-2 h-4 w-4 md:h-5 md:w-5"></i>
+                  <span class="whitespace-nowrap">Apply Filters</span>
+              </button>
+            </div>
         </div>
     </div>
 
@@ -221,10 +213,12 @@ async function fetchDoctors() {
     // Apply filters from query params if present
     const params = getQueryParams();
     if (params.specialty) {
-        document.getElementById('specialty-filter').value = params.specialty;
+        const specSel = document.getElementById('specialty');
+        if (specSel) specSel.value = params.specialty;
     }
     if (params.hospital) {
-        document.getElementById('hospital-filter').value = params.hospital;
+        const hospSel = document.getElementById('hospital');
+        if (hospSel) hospSel.value = params.hospital;
     }
     applyFiltersAndPaginate();
 }
@@ -242,10 +236,10 @@ function populateFilterOptions(doctors) {
         if (doc.speciality) specialtySet.add(doc.speciality);
         if (doc.hospital) hospitalSet.add(doc.hospital);
     });
-    const specialtyFilter = document.getElementById('specialty-filter');
-    const hospitalFilter = document.getElementById('hospital-filter');
-    specialtyFilter.innerHTML = '<option value="">Select a specialty</option>' + Array.from(specialtySet).map(s => `<option value="${s}">${s}</option>`).join('');
-    hospitalFilter.innerHTML = '<option value="">Select a hospital</option>' + Array.from(hospitalSet).map(h => `<option value="${h}">${h}</option>`).join('');
+    const specialtyFilter = document.getElementById('specialty');
+    const hospitalFilter = document.getElementById('hospital');
+    if (specialtyFilter) specialtyFilter.innerHTML = '<option value="">Select a specialty</option>' + Array.from(specialtySet).map(s => `<option value="${s}">${s}</option>`).join('');
+    if (hospitalFilter) hospitalFilter.innerHTML = '<option value="">Select a hospital</option>' + Array.from(hospitalSet).map(h => `<option value="${h}">${h}</option>`).join('');
 }
 
 function renderDoctors(doctors) {
@@ -382,9 +376,12 @@ function renderPagination(totalDoctors, page) {
 }
 
 function applyFiltersAndPaginate() {
-    const specialty = document.getElementById('specialty-filter').value;
-    const hospital = document.getElementById('hospital-filter').value;
-    const dateVal = document.getElementById('date-filter').value;
+    const specialtySel = document.getElementById('specialty');
+    const hospitalSel = document.getElementById('hospital');
+    const dateSel = document.getElementById('date');
+    const specialty = specialtySel ? specialtySel.value : '';
+    const hospital = hospitalSel ? hospitalSel.value : '';
+    const dateVal = dateSel ? dateSel.value : '';
     let filtered = allDoctors;
     if (specialty) filtered = filtered.filter(doc => doc.speciality === specialty);
     if (hospital) filtered = filtered.filter(doc => doc.hospital === hospital);
@@ -400,10 +397,14 @@ function applyFiltersAndPaginate() {
     renderPagination(filtered.length, currentPage);
 }
 
-document.getElementById('applyFiltersBtn').addEventListener('click', function() {
-    currentPage = 1;
-    applyFiltersAndPaginate();
-});
+const findBtn = document.getElementById('findDoctorsBtn');
+if (findBtn) {
+    findBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentPage = 1;
+        applyFiltersAndPaginate();
+    });
+}
 
 function injectLoginModal(){
   if(document.getElementById('loginPromptModal')) return;
@@ -443,11 +444,11 @@ function attachBookingHandlers() {
                 speciality: this.dataset.speciality,
                 hospital: this.dataset.hospital
             });
-            const specialtyFilter = document.getElementById('specialty-filter').value;
-            const hospitalFilter = document.getElementById('hospital-filter').value;
-            const dateFilter = document.getElementById('date-filter');
-            if (specialtyFilter) params.append('f_specialty', specialtyFilter);
-            if (hospitalFilter) params.append('f_hospital', hospitalFilter);
+            const specialtyFilter = document.getElementById('specialty');
+            const hospitalFilter = document.getElementById('hospital');
+            const dateFilter = document.getElementById('date');
+            if (specialtyFilter && specialtyFilter.value) params.append('f_specialty', specialtyFilter.value);
+            if (hospitalFilter && hospitalFilter.value) params.append('f_hospital', hospitalFilter.value);
             if (dateFilter && dateFilter.value) params.append('date', dateFilter.value);
             window.location.href = 'booking.html?' + params.toString();
         }));

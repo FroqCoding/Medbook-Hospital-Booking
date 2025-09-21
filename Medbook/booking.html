@@ -61,6 +61,37 @@
             </div>
         </nav>
 
+        <!-- Search Section (Copied from index for consistent look) -->
+        <div id="search" class="bg-white py-8 px-4 sm:px-6 lg:px-8" data-aos="fade-up">
+            <div class="max-w-3xl mx-auto bg-gray-50 rounded-xl shadow-md overflow-hidden p-6 relative pb-28 md:pb-24">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                        <label for="specialtySearch" class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                        <select id="specialtySearch" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                            <option value="">Select a specialty</option>
+                        </select>
+                    </div>
+                    <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                        <label for="hospitalSearch" class="block text-sm font-medium text-gray-700 mb-1">Hospital</label>
+                        <select id="hospitalSearch" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                            <option value="">Select a hospital</option>
+                        </select>
+                    </div>
+                    <div class="bg-white p-4 rounded-md shadow flex flex-col justify-end">
+                        <label for="dateSearch" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="dateSearch" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md" placeholder="YYYY-MM-DD">
+                        <p class="mt-2 text-[11px] text-gray-400 md:hidden" id="dateHelperBooking">Choose an optional target date</p>
+                    </div>
+                </div>
+                <div class="absolute bottom-4 left-0 w-full flex justify-center px-2">
+                  <button id="backSearchBtn" type="button" class="inline-flex items-center justify-center w-full md:w-auto md:min-w-[250px] px-5 py-2.5 md:py-3 border border-transparent text-sm md:text-base font-medium rounded-md text-white bg-primary hover:bg-blue-700 shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition">
+                      <i data-feather="search" class="mr-2 h-4 w-4 md:h-5 md:w-5"></i>
+                      <span class="whitespace-nowrap">Search Doctors</span>
+                  </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Booking Progress -->
         <div class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,6 +216,38 @@ if (hospital) document.getElementById('doctorHospital').textContent = hospital;
 if (preDate) {
     document.getElementById('appointmentDate').value = preDate;
     document.getElementById('selectedDateLabel').textContent = formatDate(preDate);
+}
+
+// Populate top search widget selects
+(async function populateSearchWidget(){
+    try {
+        const res = await fetch(`${window.location.origin}/doctors`);
+        if(!res.ok) return; const docs = await res.json();
+        const specs = Array.from(new Set(docs.map(d=>d.speciality).filter(Boolean)));
+        const hosps = Array.from(new Set(docs.map(d=>d.hospital).filter(Boolean)));
+        const specSel = document.getElementById('specialtySearch');
+        const hospSel = document.getElementById('hospitalSearch');
+        if(specSel) specSel.innerHTML = '<option value="">Select a specialty</option>' + specs.map(s=>`<option value="${s}">${s}</option>`).join('');
+        if(hospSel) hospSel.innerHTML = '<option value="">Select a hospital</option>' + hosps.map(h=>`<option value="${h}">${h}</option>`).join('');
+    } catch(e){ console.warn('Populate search widget failed', e); }
+})();
+
+// Back search redirect preserving chosen filters
+const backSearchBtn = document.getElementById('backSearchBtn');
+if(backSearchBtn){
+    backSearchBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        const params = [];
+        const specSel = document.getElementById('specialtySearch');
+        const hospSel = document.getElementById('hospitalSearch');
+        const dateSel = document.getElementById('dateSearch');
+        if(specSel && specSel.value) params.push(`specialty=${encodeURIComponent(specSel.value)}`);
+        if(hospSel && hospSel.value) params.push(`hospital=${encodeURIComponent(hospSel.value)}`);
+        if(dateSel && dateSel.value) params.push(`date=${encodeURIComponent(dateSel.value)}`);
+        let url = 'doctors.html';
+        if(params.length) url += '?' + params.join('&');
+        window.location.href = url;
+    });
 }
 
 // Back link preserving filters
