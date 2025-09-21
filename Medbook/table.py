@@ -10,11 +10,12 @@ import os
 app = Flask(__name__)
 CORS(app)
 # ----------------------
-# Configuration
+# Configuration (updated for Render env vars)
 # ----------------------
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://hospitalsystem_user:Mhy7Oe4sY0OIFrtd4CRVyYeERcl7kSDj@dpg-d359gq0gjchc73eui0a0-a.frankfurt-postgres.render.com/hospitalsystem"
+# Use DATABASE_URL & SECRET_KEY from environment; provide dev fallbacks.
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local_dev.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'supersecretkey' 
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key') 
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -512,4 +513,6 @@ def get_doctor_detail(doctor_id):
 # Run the App
 # ----------------------
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    host = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', os.getenv('FLASK_RUN_PORT', '5000')))
+    app.run(host=host, port=port, debug=True)
