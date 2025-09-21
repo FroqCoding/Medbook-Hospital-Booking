@@ -165,7 +165,7 @@
                 <div class="bg-white rounded-lg shadow overflow-hidden">
                     <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-lg font-medium text-gray-900">Upcoming Appointments</h3>
-                        <button id="refreshAppointments" class="text-xs text-blue-500 hover:text-blue-700">Refresh</button>
+                        <!-- Refresh button removed: list auto-updates after actions -->
                     </div>
                     <div id="appointmentsContainer" class="divide-y divide-gray-200">
                         <div class="p-6 text-sm text-gray-500" id="noAppointmentsMsg">Loading appointments...</div>
@@ -424,9 +424,8 @@
         function formatApptDate(d){ try { return new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});} catch { return d; } }
         function escapeHtml(str){ return str.replace(/[&<>"]+/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
-        document.getElementById('refreshAppointments').addEventListener('click', fetchAppointments);
-        // Fetch appointments after profile data
-        fetchAppointments();
+    // Initial fetch of appointments
+    fetchAppointments();
 
         // Modal logic for cancelling appointments
         let pendingCancelId = null;
@@ -452,7 +451,11 @@
                             alert('Failed to cancel: ' + t);
                         } else {
                             closeCancelModal();
-                            fetchAppointments();
+                            // Re-fetch list for updated status
+                            await fetchAppointments();
+                            // Optionally do a full page reload to also refresh any other derived state
+                            // Comment out if not desired:
+                            // location.reload();
                         }
                     } catch(err){
                         console.error(err);
