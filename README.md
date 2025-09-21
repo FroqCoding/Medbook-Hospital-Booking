@@ -39,9 +39,19 @@ Visit: http://localhost:5000/
 ## Deployment (Render)
 1. Create Postgres service → copy External Database URL.
 2. Set `DATABASE_URL` & `SECRET_KEY` in Web Service Environment.
-3. Start command:
+3. Preferred start command (fully qualified module path):
 ```
 python -m waitress --listen=0.0.0.0:$PORT Medbook.table:app
+```
+    This loads the app from `Medbook/table.py`.
+
+    Alternative (if you must keep `table:app`): a root-level `table.py` shim exists:
+```
+from Medbook.table import app
+```
+    Then you may use:
+```
+python -m waitress --listen=0.0.0.0:$PORT table:app
 ```
 4. Deploy; app will auto use supplied database.
 

@@ -1,10 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token
 from flask_cors import CORS
 from datetime import datetime, date
-from flask import send_from_directory, redirect  # added for static serving
 import os
 # Attempt to load .env if present
 try:
@@ -16,16 +15,45 @@ except Exception:
 app = Flask(__name__)
 CORS(app)
 # ----------------------
-# Configuration (updated for Render env vars)
+# Configuration (updated for Render env vars & production enforcement)
 # ----------------------
-# Use DATABASE_URL & SECRET_KEY from environment; provide dev fallbacks.
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local_dev.db')
+# We want to ensure that on Render (RENDER env var present) we NEVER silently
+# fall back to a local sqlite database because that causes data loss & confusion.
+# In local development (RENDER not set) we allow sqlite fallback.
+
+raw_db_url = os.getenv('DATABASE_URL')
+
+# Enhanced Render detection: check for any known Render-provided vars.
+render_markers = [
+    'RENDER', 'RENDER_SERVICE_ID', 'RENDER_SERVICE_NAME', 'RENDER_INSTANCE_ID', 'RENDER_EXTERNAL_URL'
+]
+on_render = any(os.getenv(k) for k in render_markers)
+
+# Normalize older postgres:// URI to postgresql:// for SQLAlchemy compatibility.
+if raw_db_url and raw_db_url.startswith('postgres://'):
+    raw_db_url = raw_db_url.replace('postgres://', 'postgresql://', 1)
+
+# Disallow implicit fallback: require DATABASE_URL always.
+if not raw_db_url:
+    # Provide environment snapshot keys to aid debugging in logs.
+    env_keys_preview = ','.join(sorted(k for k in os.environ.keys() if k.startswith('RENDER')))
+    raise RuntimeError(
+        'DATABASE_URL is not set. Set it to your Postgres connection string. '
+        f'Render detected={on_render}. Render-related envs: {env_keys_preview or "<none>"}'
+    )
+
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key') 
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key')
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 280
 }
+print(f"[startup] Using database URL: {app.config['SQLALCHEMY_DATABASE_URI']} (on_render={on_render})")
+
+# If somehow sqlite slipped through in what looks like production, abort loudly.
+if on_render and app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:'):
+    raise RuntimeError('SQLite database in production environment is not allowed. Check DATABASE_URL.')
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -92,78 +120,122 @@ class Appointment(db.Model):
 # --- Ensure schema (add missing reason column if table pre-existed) ---
 from sqlalchemy import inspect, text
 
+# ----------------------
+# Utility helpers
+# ----------------------
+def json_error(message: str, status: int = 400, **extra):
+    payload = {'message': message}
+    if extra:
+        payload.update(extra)
+    return jsonify(payload), status
+
+def calc_age(dob):
+    if not dob:
+        return None
+    today = date.today()
+    years = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    return years if years >= 0 else None
+
+def default_reason(val):
+    return (val if val and str(val).strip() else 'Unstated')
+
 def ensure_schema():
+    """Idempotent best-effort schema adjustments.
+
+    Only executes Postgres-specific DDL when connected to Postgres. Designed to
+    be safe if run multiple times. Silent failures are logged to stdout.
+    """
     with app.app_context():
-        insp = inspect(db.engine)
-        # Appointments adjustments (existing logic)
+        engine = db.engine
+        insp = inspect(engine)
+        backend = engine.url.get_backend_name()
+
+        # --- appointments table adjustments ---
         if 'appointments' in insp.get_table_names():
-            cols = [c['name'] for c in insp.get_columns('appointments')]
+            cols = {c['name'] for c in insp.get_columns('appointments')}
             if 'reason' not in cols:
-                with db.engine.connect() as conn:
-                    try:
-                        conn.execute(text('ALTER TABLE appointments ADD COLUMN reason VARCHAR'))
-                        conn.commit()
-                    except Exception:
-                        conn.rollback()
-            # Add uniqueness constraint for slot if not exists (Postgres)
-            with db.engine.connect() as conn:
                 try:
-                    res = conn.execute(text("""
+                    engine.execute(text('ALTER TABLE appointments ADD COLUMN reason VARCHAR'))
+                    print('[ensure_schema] Added reason column')
+                except Exception:
+                    pass
+            if backend == 'postgresql':
+                # Unique constraint for slot
+                try:
+                    res = engine.execute(text("""
                         SELECT constraint_name FROM information_schema.table_constraints
                         WHERE table_name='appointments' AND constraint_type='UNIQUE';
                     """))
                     existing_uniques = {r[0] for r in res}
                     if 'uq_doctor_slot' not in existing_uniques:
                         try:
-                            conn.execute(text('ALTER TABLE appointments ADD CONSTRAINT uq_doctor_slot UNIQUE (doctorid, appointment_date, appointment_time)'))
-                            conn.commit()
+                            engine.execute(text('ALTER TABLE appointments ADD CONSTRAINT uq_doctor_slot UNIQUE (doctorid, appointment_date, appointment_time)'))
                             print('[ensure_schema] Added uq_doctor_slot constraint')
                         except Exception:
-                            conn.rollback()
+                            pass
                 except Exception as e:
                     print('[ensure_schema] unique constraint check failed:', e)
-            try:
-                with db.engine.connect() as conn:
-                    res = conn.execute(text("""
+                # Identity fix
+                try:
+                    res = engine.execute(text("""
                         SELECT column_default FROM information_schema.columns 
                         WHERE table_name='appointments' AND column_name='appointmentid';
                     """))
-                    default_val = res.fetchone()[0] if res else None
+                    row = res.fetchone()
+                    default_val = row[0] if row else None
                     if not default_val:
                         try:
-                            conn.execute(text('ALTER TABLE appointments ALTER COLUMN appointmentid ADD GENERATED BY DEFAULT AS IDENTITY'))
-                            conn.commit()
+                            engine.execute(text('ALTER TABLE appointments ALTER COLUMN appointmentid ADD GENERATED BY DEFAULT AS IDENTITY'))
+                            print('[ensure_schema] Added identity to appointmentid')
                         except Exception:
-                            conn.rollback()
+                            # Fallback sequence fix
                             try:
-                                conn.execute(text("CREATE SEQUENCE IF NOT EXISTS appointments_appointmentid_seq"))
-                                conn.execute(text("ALTER TABLE appointments ALTER COLUMN appointmentid SET DEFAULT nextval('appointments_appointmentid_seq')"))
-                                conn.execute(text("SELECT setval('appointments_appointmentid_seq', COALESCE((SELECT MAX(appointmentid) FROM appointments),0))"))
-                                conn.commit()
-                            except Exception as e:
-                                conn.rollback()
-                                print('[ensure_schema] Failed to set auto increment for appointmentid:', e)
-            except Exception as e:
-                print('[ensure_schema] identity check error:', e)
-        # Users table new columns gender & date_of_birth (robust add)
+                                engine.execute(text("CREATE SEQUENCE IF NOT EXISTS appointments_appointmentid_seq"))
+                                engine.execute(text("ALTER TABLE appointments ALTER COLUMN appointmentid SET DEFAULT nextval('appointments_appointmentid_seq')"))
+                                engine.execute(text("SELECT setval('appointments_appointmentid_seq', COALESCE((SELECT MAX(appointmentid) FROM appointments),0))"))
+                                print('[ensure_schema] Applied sequence fallback for appointmentid')
+                            except Exception as inner:
+                                print('[ensure_schema] Failed identity/sequence patch:', inner)
+                except Exception as e:
+                    print('[ensure_schema] identity check error:', e)
+
+        # --- users table additive columns ---
         if 'users' in insp.get_table_names():
             user_cols = {c['name'] for c in insp.get_columns('users')}
-            needed = []
+            additions = []
             if 'gender' not in user_cols:
-                needed.append('ALTER TABLE users ADD COLUMN gender VARCHAR')
+                additions.append('ALTER TABLE users ADD COLUMN gender VARCHAR')
             if 'date_of_birth' not in user_cols:
-                needed.append('ALTER TABLE users ADD COLUMN date_of_birth DATE')
-            if 'age' not in user_cols:  # restore legacy column to satisfy ORM
-                needed.append('ALTER TABLE users ADD COLUMN age INTEGER')
-            for ddl in needed:
-                with db.engine.connect() as conn:
-                    try:
-                        conn.execute(text(ddl))
-                        conn.commit()
-                        print('[ensure_schema] applied:', ddl)
-                    except Exception as e:
-                        conn.rollback()
-                        print('[ensure_schema] users alter skipped:', e)
+                additions.append('ALTER TABLE users ADD COLUMN date_of_birth DATE')
+            if 'age' not in user_cols:
+                additions.append('ALTER TABLE users ADD COLUMN age INTEGER')
+            for ddl in additions:
+                try:
+                    engine.execute(text(ddl))
+                    print('[ensure_schema] applied:', ddl)
+                except Exception:
+                    pass
+
+"""Auto-create base tables if missing, then apply incremental ensure_schema adjustments.
+
+Rationale: In some deployment scenarios (fresh Postgres database without running
+seed or manual schema.sql), the reflected tables set can be empty. Previously we
+ran ensure_schema() only, which assumes core tables may already exist. We now
+detect the absence of any required tables and call db.create_all() once to lay
+down the ORM-defined schema, then run ensure_schema() to apply additive DDL
+logic (extra columns, unique constraints, identity fixes).
+"""
+with app.app_context():
+    from sqlalchemy import inspect as _insp_mod
+    _insp = _insp_mod(db.engine)
+    required_tables = {"users","hospitals","doctors","doctor_availability","appointments"}
+    existing = set(_insp.get_table_names())
+    if not required_tables.issubset(existing):
+        try:
+            db.create_all()
+            print('[startup] Performed db.create_all() to create missing base tables')
+        except Exception as e:
+            print('[startup] db.create_all() failed:', e)
 
 ensure_schema()
 
@@ -174,17 +246,18 @@ ensure_schema()
 def register_user():
     data = request.get_json() or {}
     required_fields = ['name','email','phone','password','gender','date_of_birth']
-    if any(f not in data or not str(data[f]).strip() for f in required_fields):
-        return jsonify({'message': 'Missing required fields'}), 400
+    missing = [f for f in required_fields if f not in data or not str(data[f]).strip()]
+    if missing:
+        return json_error('Missing required fields', 400, missing=missing)
     # Check if email already exists in users
     if User.query.filter_by(email=data['email']).first():
-        return jsonify({'message': 'Email already exists'}), 400
+        return json_error('Email already exists', 400)
     # Parse DOB
     dob = None
     try:
         dob = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
     except ValueError:
-        return jsonify({'message': 'Invalid date_of_birth format, expected YYYY-MM-DD'}), 400
+        return json_error('Invalid date_of_birth format, expected YYYY-MM-DD', 400)
     user = User(
         name=data['name'],
         email=data['email'],
@@ -208,13 +281,12 @@ def register_user():
 def login_user():
     data = request.get_json()
     if not data or not all(k in data for k in ('email', 'password')):
-        return jsonify({'message': 'Missing required fields'}), 400
+        return json_error('Missing required fields', 400)
     user = User.query.filter_by(email=data['email']).first()
     if user and bcrypt.check_password_hash(user.password, data['password']):
         access_token = create_access_token(identity=user.userid)
         return jsonify({'access_token': access_token, 'userid': user.userid, 'message': 'Login successful'}), 200
-    else:
-        return jsonify({'message': 'Invalid credentials'}), 401
+    return json_error('Invalid credentials', 401)
 
 # ----------------------
 # Route to Get/Update User Profile
@@ -223,13 +295,7 @@ def login_user():
 def user_profile(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'message': 'User not found'}), 404
-    def calc_age(dob):
-        if not dob:
-            return None
-        today = date.today()
-        years = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        return years if years >= 0 else None
+        return json_error('User not found', 404)
     if request.method == 'GET':
         return jsonify({
             'userid': user.userid,
@@ -252,12 +318,12 @@ def user_profile(user_id):
             try:
                 user.date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
             except ValueError:
-                return jsonify({'message': 'Invalid date_of_birth format, expected YYYY-MM-DD'}), 400
+                return json_error('Invalid date_of_birth format, expected YYYY-MM-DD', 400)
         user.gender = data.get('gender', user.gender)
         user.height = int(data['height']) if 'height' in data and str(data['height']).strip() not in ['', 'None', 'null'] else user.height
         user.weight = int(data['weight']) if 'weight' in data and str(data['weight']).strip() not in ['', 'None', 'null'] else user.weight
         db.session.commit()
-        return jsonify({'message': 'Profile updated successfully'})
+    return jsonify({'message': 'Profile updated successfully'})
 
 # ----------------------
 # Route to Get Doctors
@@ -358,22 +424,22 @@ def create_appointment():
     print('[create_appointment] incoming payload:', data)
     required = ['userid','doctorid','date','time']
     if any(k not in data or not data[k] for k in required):
-        return jsonify({'message': 'userid, doctorid, date, time are required'}), 400
+        return json_error('userid, doctorid, date, time are required', 400)
     user = User.query.get(data['userid'])
     doctor = Doctor.query.get(data['doctorid'])
     if not user or not doctor:
-        return jsonify({'message': 'Invalid user or doctor'}), 400
+        return json_error('Invalid user or doctor', 400)
     try:
         appt_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
         appt_time = datetime.strptime(data['time'], '%H:%M').time()
     except ValueError:
-        return jsonify({'message': 'Invalid date or time format'}), 400
+        return json_error('Invalid date or time format', 400)
     appt = Appointment(
         userid=user.userid,
         doctorid=doctor.doctorid,
         appointment_date=appt_date,
         appointment_time=appt_time,
-        reason=(lambda r: (r if r and str(r).strip() else 'Unstated'))(data.get('reason')),
+        reason=default_reason(data.get('reason')),
         status=True
     )
     try:
@@ -382,7 +448,7 @@ def create_appointment():
     except Exception as e:
         db.session.rollback()
         import traceback; traceback.print_exc()
-        return jsonify({'message': 'Database error creating appointment', 'error': str(e)}), 500
+        return json_error('Database error creating appointment', 500, error=str(e))
     hospital = Hospital.query.get(doctor.hospitalid)
     return jsonify({
         'message': 'Appointment created',
@@ -420,13 +486,37 @@ def debug_appt_identity():
     return jsonify({'appointmentid_default': row[0] if row else None})
 
 # ----------------------
+# Debug: Active database info
+# ----------------------
+@app.route('/debug/db')
+def debug_db():
+    try:
+        engine_url = db.engine.url
+        info = {
+            'driver': engine_url.get_backend_name(),
+            'database': engine_url.database,
+            'host': engine_url.host,
+            'port': engine_url.port,
+            'username': engine_url.username,
+            'render_env': bool(os.getenv('RENDER')),
+            # no sqlite fallback now; presence of sqlite indicates misconfiguration
+            'is_sqlite': db.engine.url.get_backend_name().startswith('sqlite')
+        }
+        # Simple connectivity check
+        db.session.execute(text('SELECT 1'))
+        info['connectivity'] = 'ok'
+        return jsonify(info)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ----------------------
 # Get Appointments for a User
 # ----------------------
 @app.route('/users/<int:user_id>/appointments', methods=['GET'])
 def get_user_appointments(user_id):
     user = User.query.get(user_id)
     if not user:
-        return jsonify({'message': 'User not found'}), 404
+        return json_error('User not found', 404)
     from sqlalchemy import asc
     q = db.session.query(Appointment, Doctor, Hospital).join(Doctor, Appointment.doctorid==Doctor.doctorid).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Appointment.userid==user_id).order_by(asc(Appointment.appointment_date), asc(Appointment.appointment_time)).all()
     results = []
@@ -451,9 +541,9 @@ def get_user_appointments(user_id):
 def cancel_appointment(appointment_id):
     appt = Appointment.query.get(appointment_id)
     if not appt:
-        return jsonify({'message': 'Appointment not found'}), 404
+        return json_error('Appointment not found', 404)
     if not appt.status:
-        return jsonify({'message': 'Already cancelled'}), 400
+        return json_error('Already cancelled', 400)
     appt.status = False
     db.session.commit()
     return jsonify({'message': 'Appointment cancelled', 'appointmentid': appt.appointmentid, 'status': appt.status})
@@ -496,7 +586,7 @@ def serve_page(page):
 def get_doctor_detail(doctor_id):
     doc = db.session.query(Doctor, Hospital).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Doctor.doctorid==doctor_id).first()
     if not doc:
-        return jsonify({'message': 'Doctor not found'}), 404
+        return json_error('Doctor not found', 404)
     doctor, hospital = doc
     # Gather availability
     from collections import defaultdict
@@ -545,7 +635,19 @@ def health():
         db.session.execute(text('SELECT 1'))
         return jsonify({'status': 'ok'}), 200
     except Exception as e:
-        return jsonify({'status': 'error', 'error': str(e)}), 500
+        return json_error('database error', 500, error=str(e))
+
+# ----------------------
+# Debug: service config snapshot
+# ----------------------
+@app.route('/debug/config')
+def debug_config():
+    return jsonify({
+    'is_sqlite': app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:'),
+        'sqlalchemy_url': app.config['SQLALCHEMY_DATABASE_URI'],
+        'has_secret_key': bool(app.config.get('SECRET_KEY')),
+        'env_render': bool(os.getenv('RENDER'))
+    })
 
 # ----------------------
 # Run the App
