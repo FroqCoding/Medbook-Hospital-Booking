@@ -40,6 +40,11 @@ on_render = any(os.getenv(k) for k in render_markers)
 if raw_db_url and raw_db_url.startswith('postgres://'):
     raw_db_url = raw_db_url.replace('postgres://','postgresql://',1)
 
+# Prefer psycopg3 driver if available; ensure URL uses +psycopg so SQLAlchemy loads
+# the psycopg (v3) dialect rather than default psycopg2. Safe no-op if already contains a '+'.
+if raw_db_url and raw_db_url.startswith('postgresql://') and '+psycopg://' not in raw_db_url:
+    raw_db_url = raw_db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
+
 # Disallow implicit fallback: require DATABASE_URL always.
 if not raw_db_url:
     if on_render:
