@@ -570,25 +570,30 @@
             modal.classList.add('hidden');
             modal.setAttribute('aria-hidden','true');
         }
-        const cancelRateBtn = document.getElementById('cancelRateBtn');
-        if(cancelRateBtn) cancelRateBtn.addEventListener('click', closeRateModal);
-        const closeRateModalBtn = document.getElementById('closeRateModalBtn');
-        if(closeRateModalBtn) closeRateModalBtn.addEventListener('click', closeRateModal);
+        // Delegate modal button events to avoid timing issues
+        document.addEventListener('click', (e)=>{
+            const target = e.target;
+            if(!(target instanceof HTMLElement)) return;
+            if(target.id === 'cancelRateBtn' || target.id === 'closeRateModalBtn'){
+                closeRateModal();
+            }
+            if(target.id === 'submitRateBtn'){
+                handleSubmitRating(target);
+            }
+        });
         document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ const m=document.getElementById('rateModal'); if(m && !m.classList.contains('hidden')) closeRateModal(); }});
         const rateModalEl = document.getElementById('rateModal');
         if(rateModalEl) rateModalEl.addEventListener('click', (e)=>{ if(e.target.id==='rateModal') closeRateModal(); });
 
-        const submitRateBtn = document.getElementById('submitRateBtn');
-        if(submitRateBtn) submitRateBtn.addEventListener('click', async ()=>{
-            if(submitRateBtn.dataset.loading==='1') return; // double-click guard
-            const appointmentId = document.getElementById('rateAppointmentId').value;
-            const comment = document.getElementById('rateComment').value.trim();
+        async function handleSubmitRating(btn){
+            if(btn.dataset.loading==='1') return;
+            const appointmentId = document.getElementById('rateAppointmentId')?.value;
+            const comment = document.getElementById('rateComment')?.value.trim();
             const rating = currentStarValue;
             if(!rating) return;
-            // Placeholder submission endpoint (adjust backend route if needed)
             try {
-                submitRateBtn.dataset.loading='1';
-                submitRateBtn.classList.add('opacity-70','cursor-wait');
+                btn.dataset.loading='1';
+                btn.classList.add('opacity-70','cursor-wait');
                 const res = await fetch(`${apiBase}/appointments/${appointmentId}/rating`,{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -597,22 +602,19 @@
                 if(!res.ok){
                     const t = await res.text();
                     alert('Failed to submit rating: '+t);
-                    submitRateBtn.dataset.loading='';
-                    submitRateBtn.classList.remove('opacity-70','cursor-wait');
                     return;
                 }
                 closeRateModal();
-                // Refresh appointments so the button can be removed or disabled
                 await fetchAppointments();
                 showToast('Rating left successfully');
             } catch(err){
                 console.error(err);
                 alert('Network error submitting rating');
             } finally {
-                submitRateBtn.dataset.loading='';
-                submitRateBtn.classList.remove('opacity-70','cursor-wait');
+                btn.dataset.loading='';
+                btn.classList.remove('opacity-70','cursor-wait');
             }
-        });
+        }
 
         // Simple toast reuse of existing successNotification or separate
         function showToast(msg){
