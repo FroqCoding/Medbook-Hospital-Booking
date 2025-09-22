@@ -443,8 +443,8 @@
                             : {cls:'bg-blue-100 text-blue-700 font-medium', text:'Scheduled'});
                     const cardClass = a._isCancelled ? 'bg-red-50 border border-red-100' : '';
               const ratingSnippet = a.has_review && a.user_rating ? `<div class='mt-2 flex items-center text-xs text-yellow-600'>${'★'.repeat(Math.round(a.user_rating))}<span class='ml-1 text-gray-500'>(${a.user_rating.toFixed(0)})</span></div>` : '';
-                  // Show rate button only if completed, not cancelled, and not yet reviewed
-                  const showRateBtn = a._isCompleted && !a._isCancelled && !a.has_review;
+                  // Always allow editing/rating for completed & not cancelled appointments
+                  const showRateBtn = a._isCompleted && !a._isCancelled;
                     container.innerHTML += `
                         <div class="px-4 py-5 sm:px-6 appointment-card transition-all duration-300 ${cardClass}">
                     <div class="flex items-center justify-between">
@@ -467,7 +467,7 @@
                         ${escapeHtml(a.hospital)}
                     </div>
                     ${a.reason ? `<div class='mt-2 text-xs text-gray-500'>Reason: ${escapeHtml(a.reason)}</div>`: ''}
-                        <div class="mt-3 flex justify-end">${showRateBtn ? `<button data-id="${a.appointmentid}" data-doctor="${escapeHtml(a.doctor_name)}" data-speciality="${escapeHtml(a.speciality)}" class="rate-btn bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded mr-2">Rate Appointment</button>` : (a.has_review && a.user_rating ? `<div class='flex items-center text-xs text-yellow-600 mr-2'>${'★'.repeat(Math.round(a.user_rating))}</div>`:'')}${(!a._isCancelled && !a._isCompleted) ? `<button data-id="${a.appointmentid}" class="cancel-btn bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">Cancel Appointment</button>` : ''}</div>
+                        <div class="mt-3 flex justify-end">${showRateBtn ? `<button data-id="${a.appointmentid}" data-doctor="${escapeHtml(a.doctor_name)}" data-speciality="${escapeHtml(a.speciality)}" class="rate-btn bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded mr-2">${a.has_review ? 'Edit Appointment' : 'Rate Appointment'}</button>` : ''}${(!a._isCancelled && !a._isCompleted) ? `<button data-id="${a.appointmentid}" class="cancel-btn bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">Cancel Appointment</button>` : ''}</div>
                 </div>`;
                 });
                 feather.replace();
