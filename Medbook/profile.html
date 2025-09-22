@@ -384,7 +384,7 @@
             }
         });
 
-    console.log('[profile] Script version 2025-09-22/debug3 starting');
+    console.log('[profile] Script version 2025-09-22/debug4 starting');
         async function fetchAppointments(){
             console.log('[profile] fetchAppointments invoked');
             if(!userId) return;            
@@ -591,9 +591,11 @@
             const comment = document.getElementById('rateComment')?.value.trim();
             const rating = currentStarValue;
             if(!rating) return;
+            btn.dataset.loading='1';
+            btn.classList.add('opacity-70','cursor-wait');
+            console.log('[profile] rating submit start', {appointmentId, rating});
+            let postSucceeded = false;
             try {
-                btn.dataset.loading='1';
-                btn.classList.add('opacity-70','cursor-wait');
                 const res = await fetch(`${apiBase}/appointments/${appointmentId}/rating`,{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -601,29 +603,43 @@
                 });
                 if(!res.ok){
                     const t = await res.text();
+                    console.warn('[profile] rating POST non-OK', res.status, t);
                     alert('Failed to submit review: '+t);
                     return;
                 }
-                closeRateModal();
-                await fetchAppointments();
-                showToast('Review left successfully');
-            } catch(err){
-                console.error('[profile] submit rating error', err);
-                // Fallback: verify if review actually saved to suppress false negative
+                postSucceeded = true;
+                console.log('[profile] rating POST success');
+            } catch(postErr){
+                console.error('[profile] network error during rating POST', postErr);
+                // Attempt verification to see if server actually processed before client error
                 try {
                     const verify = await fetch(`${apiBase}/users/${userId}/appointments`);
                     if(verify.ok){
                         const appts = await verify.json();
                         const found = appts.find(a => a.appointmentid == appointmentId && a.has_review);
                         if(found){
-                            closeRateModal();
-                            await fetchAppointments();
-                            showToast('Review left successfully');
-                            return; // Suppress network error alert
+                            console.log('[profile] verification found saved review after POST error');
+                            postSucceeded = true;
                         }
                     }
-                } catch(inner){ console.warn('[profile] verification after error failed', inner); }
-                alert('Network error submitting review');
+                } catch(inner){ console.warn('[profile] verification fetch failed', inner); }
+                if(!postSucceeded){
+                    alert('Network error submitting review');
+                    return;
+                }
+            } finally {
+                // Intentionally do not remove loading yet if continuing to refresh list
+            }
+            // If we reach here we consider review saved
+            closeRateModal();
+            showToast('Review left successfully');
+            // Refresh appointments separately so a failure here does not show network error for submit
+            try {
+                console.log('[profile] refreshing appointments after review');
+                await fetchAppointments();
+                console.log('[profile] appointments refresh complete');
+            } catch(refreshErr){
+                console.error('[profile] appointments refresh error (non-fatal)', refreshErr);
             } finally {
                 btn.dataset.loading='';
                 btn.classList.remove('opacity-70','cursor-wait');
