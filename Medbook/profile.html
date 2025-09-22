@@ -580,12 +580,15 @@
 
         const submitRateBtn = document.getElementById('submitRateBtn');
         if(submitRateBtn) submitRateBtn.addEventListener('click', async ()=>{
+            if(submitRateBtn.dataset.loading==='1') return; // double-click guard
             const appointmentId = document.getElementById('rateAppointmentId').value;
             const comment = document.getElementById('rateComment').value.trim();
             const rating = currentStarValue;
             if(!rating) return;
             // Placeholder submission endpoint (adjust backend route if needed)
             try {
+                submitRateBtn.dataset.loading='1';
+                submitRateBtn.classList.add('opacity-70','cursor-wait');
                 const res = await fetch(`${apiBase}/appointments/${appointmentId}/rating`,{
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
@@ -594,6 +597,8 @@
                 if(!res.ok){
                     const t = await res.text();
                     alert('Failed to submit rating: '+t);
+                    submitRateBtn.dataset.loading='';
+                    submitRateBtn.classList.remove('opacity-70','cursor-wait');
                     return;
                 }
                 closeRateModal();
@@ -603,6 +608,9 @@
             } catch(err){
                 console.error(err);
                 alert('Network error submitting rating');
+            } finally {
+                submitRateBtn.dataset.loading='';
+                submitRateBtn.classList.remove('opacity-70','cursor-wait');
             }
         });
 
