@@ -27,6 +27,10 @@
         .step-circle { transition: background-color .35s ease, transform .35s ease; }
         .step-circle.active-step { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         .step-label { transition: color .35s ease; }
+        /* Active day (working day) button styling */
+        .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
+        .day-btn:not(.active-day){ transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+        .day-btn.active-day:focus { outline:2px solid rgba(37,99,235,0.6); outline-offset:2px; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -45,8 +49,8 @@
                     <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
                     <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
                 </div>
-                <div class="flex items-center">
-                    <a href="#" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                <div class="flex items-center" id="navAuthArea">
+                    <a href="doctor_login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Doctor Login</a>
                 </div>
             </div>
         </div>
@@ -211,11 +215,11 @@
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
                             <label for="startTime" class="block text-sm font-medium text-gray-700">Start Time</label>
-                            <input type="time" id="startTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input type="time" id="startTime" step="1800" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label for="endTime" class="block text-sm font-medium text-gray-700">End Time</label>
-                            <input type="time" id="endTime" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input type="time" id="endTime" step="1800" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                     </div>
                     
@@ -262,6 +266,25 @@
             once: true
         });
         feather.replace();
+
+                // Nav auth switch
+                (function(){
+                        const area = document.getElementById('navAuthArea');
+                        if(!area) return;
+                        if(localStorage.getItem('doctorLoggedIn')==='true'){
+                                area.innerHTML = `<div class='flex items-center space-x-2'>
+                                    <button id='navDocProfile' class='flex items-center focus:outline-none'>
+                                        <img src='https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg' class='h-8 w-8 rounded-full' />
+                                    </button>
+                                    <button id='navDocLogout' class='text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1'>Logout</button>
+                                </div>`;
+                                document.getElementById('navDocProfile').addEventListener('click',()=>{
+                                     const did = localStorage.getItem('doctorId');
+                                     if(did) window.location.href='doc-profile.html?doctorid='+did; else window.location.href='doctor_login.html';
+                                });
+                                document.getElementById('navDocLogout').addEventListener('click',()=>{localStorage.removeItem('doctorLoggedIn');localStorage.removeItem('doctorId');localStorage.removeItem('doctorName');window.location.href='doctor_login.html';});
+                        }
+                })();
 
         function updateProgress(activeStep) {
             document.querySelectorAll('.step-indicator').forEach(el => {
@@ -333,9 +356,132 @@
             if (active) document.getElementById('stepsContainer').style.height = active.offsetHeight + 'px';
         });
 
-        document.getElementById('doctorSignupForm').addEventListener('submit', function(e) {
+        // Availability day button toggles (ensures blue highlight when active)
+        const dayButtons = document.querySelectorAll('.day-btn');
+        dayButtons.forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                const active = btn.classList.contains('active-day');
+                if(active){
+                    btn.classList.remove('active-day');
+                } else {
+                    btn.classList.add('active-day');
+                }
+            });
+        });
+
+        // Snap time inputs to 30-minute boundaries even if browser lets custom minutes
+        function snapToHalfHour(value){
+            if(!value) return value;
+            const [h,m] = value.split(':').map(Number);
+            if(isNaN(h) || isNaN(m)) return value;
+            const total = h*60 + m;
+            const snapped = Math.round(total / 30) * 30; // nearest 30
+            const nh = String(Math.floor(snapped/60)).padStart(2,'0');
+            const nm = String(snapped%60).padStart(2,'0');
+            return `${nh}:${nm}`;
+        }
+        ['startTime','endTime'].forEach(id=>{
+            const el = document.getElementById(id);
+            el.addEventListener('change',()=>{ el.value = snapToHalfHour(el.value); });
+            el.addEventListener('blur',()=>{ el.value = snapToHalfHour(el.value); });
+        });
+
+        const availabilityList = document.getElementById('availabilityList');
+    const availabilityBlocks = []; // {day,start,end}
+        document.getElementById('addAvailability').addEventListener('click',()=>{
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
+            if(!selectedDays.length){ toast('Select at least one day'); return; }
+            if(!start || !end){ toast('Start & end times required'); return; }
+            // Convert to HH:MM 24h, ensure start < end
+            if(start >= end){ toast('Start time must be before end time'); return; }
+            const abbrevMap = {sunday:'Sun',monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat'};
+            selectedDays.forEach(d=>{
+                const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
+                // prevent duplicate identical span for same day
+                if(!availabilityBlocks.some(b=>b.day===day && b.start===start.slice(0,5) && b.end===end.slice(0,5))){
+                    availabilityBlocks.push({day: day, start: start.slice(0,5), end: end.slice(0,5)});
+                }
+            });
+            renderAvailability();
+        });
+
+        function renderAvailability(){
+            if(!availabilityList) return;
+            if(!availabilityBlocks.length){ availabilityList.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
+            const grouped = {};
+            availabilityBlocks.forEach(b=>{ const key = b.start+'-'+b.end; grouped[key]=grouped[key]||[]; grouped[key].push(b.day); });
+            availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
+                const [st,en]=range.split('-');
+                return `<div class='flex items-center justify-between bg-gray-50 border border-gray-200 rounded p-2 text-xs'>
+                  <div><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
+                  <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
+                </div>`;
+            }).join('');
+            availabilityList.querySelectorAll('.remove-span').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    const [st,en]=btn.getAttribute('data-range').split('-');
+                    for(let i=availabilityBlocks.length-1;i>=0;i--){
+                        if(availabilityBlocks[i].start===st && availabilityBlocks[i].end===en){ availabilityBlocks.splice(i,1); }
+                    }
+                    renderAvailability();
+                });
+            });
+        }
+
+        function toast(msg){
+            let el = document.getElementById('toast');
+            if(!el){
+                el = document.createElement('div');
+                el.id='toast';
+                el.className='fixed bottom-4 right-4 bg-gray-900 text-white text-sm px-4 py-2 rounded shadow z-50';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg; el.style.opacity='1';
+            setTimeout(()=>{el.style.opacity='0';},2500);
+        }
+
+        document.getElementById('doctorSignupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            alert('Doctor registration submitted successfully! Our team will review your information and contact you shortly.');
+            const payload = {
+                first_name: document.getElementById('firstName').value.trim(),
+                last_name: document.getElementById('lastName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                gender: document.getElementById('gender').value,
+                date_of_birth: document.getElementById('dob').value,
+                medical_license_number: document.getElementById('medicalLicense').value.trim(),
+                speciality: document.getElementById('specialty').value,
+                experience: document.getElementById('experience').value,
+                hospital: document.getElementById('hospital').value.trim(),
+                bio: document.getElementById('bio').value.trim(),
+                password: (document.getElementById('email').value.split('@')[0] + '123').slice(0,32) // TEMP: simple default or could add password fields
+            };
+            // Basic validation
+            const missing = Object.entries(payload).filter(([k,v])=>!v).map(([k])=>k);
+            if(missing.length){ toast('Missing: '+missing.slice(0,4).join(', ')); return; }
+                        // If user forgot to click Add Availability but selected days + times, auto add one block
+                        if(!availabilityBlocks.length){
+                                const start = document.getElementById('startTime').value;
+                                const end = document.getElementById('endTime').value;
+                                const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
+                                const abbrevMap = {sunday:'Sun',monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat'};
+                                if(selectedDays.length && start && end && start < end){
+                                        selectedDays.forEach(d=>{
+                                            const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
+                                            availabilityBlocks.push({day: day, start: start.slice(0,5), end: end.slice(0,5)});
+                                        });
+                                }
+                        }
+                        payload.availability = availabilityBlocks;
+            try {
+                const res = await fetch(`${window.location.origin}/doctors/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+                const json = await res.json();
+                if(!res.ok){ toast(json.message||'Registration failed'); return; }
+                toast('Registered! Redirecting to doctor login');
+                setTimeout(()=>{ window.location.href='doctor_login.html'; },1200);
+            } catch(err){ console.error(err); toast('Network error'); }
         });
     </script>
 </body>

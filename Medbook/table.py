@@ -5,19 +5,45 @@ from flask_jwt_extended import JWTManager, create_access_token
 from flask_cors import CORS
 from datetime import datetime, date
 import os
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
 
 app = Flask(__name__)
 CORS(app)
 # ----------------------
 # Configuration (updated for Render env vars & production enforcement)
 # ----------------------
-# Goal: Prevent accidental sqlite usage in production (Render). Strengthen
-# detection & require explicit opt-in for sqlite fallback via ALLOW_SQLITE_FALLBACK=1.
+"""Goal: Prevent accidental sqlite usage in production (Render). Strengthen
+detection & require explicit opt-in for sqlite fallback via ALLOW_SQLITE_FALLBACK=1.
+Also delay optional .env loading until after Render detection so production
+never depends on a bundled .env file."""
+
+# First detect if we are on Render (independent of any .env loading)
+render_markers = [
+    'RENDER','RENDER_SERVICE_ID','RENDER_SERVICE_NAME','RENDER_INSTANCE_ID','RENDER_EXTERNAL_URL'
+]
+on_render = any(os.getenv(k) for k in render_markers)
+_fs_detect_reasons = []
+try:
+    cwd = os.getcwd()
+    if cwd.startswith('/opt/render'):
+        _fs_detect_reasons.append(f"cwd:{cwd}")
+    if os.path.exists('/opt/render'):
+        _fs_detect_reasons.append('path:/opt/render')
+except Exception:
+    pass
+if not on_render and _fs_detect_reasons:
+    on_render = True
+
+# Only load .env for local/dev (never in Render) so production env relies solely on platform vars.
+if not on_render and os.path.exists('.env'):
+    try:
+        import importlib
+        spec = importlib.util.find_spec('dotenv')
+        if spec is not None:  # only attempt if installed
+            from dotenv import load_dotenv  # type: ignore  # noqa: F401
+            load_dotenv()
+            print('[startup] Loaded local .env file')
+    except Exception:
+        pass
 
 possible_db_vars = [
     'DATABASE_URL','DB_URL','POSTGRES_URL','POSTGRES_URI','DATABASE_URI',
@@ -30,37 +56,13 @@ for _v in possible_db_vars:
         raw_db_url = val
         break
 
-# Enhanced Render detection: check for any known Render-provided vars.
-render_markers = [
-    'RENDER','RENDER_SERVICE_ID','RENDER_SERVICE_NAME','RENDER_INSTANCE_ID','RENDER_EXTERNAL_URL'
-]
-on_render = any(os.getenv(k) for k in render_markers)
-
-# Additional heuristic detection: many Render services run under /opt/render/*
-_fs_detect_reasons = []
-try:
-    cwd = os.getcwd()
-    if cwd.startswith('/opt/render'):
-        _fs_detect_reasons.append(f"cwd:{cwd}")
-    if os.path.exists('/opt/render'):  # base directory present in container
-        _fs_detect_reasons.append('path:/opt/render')
-except Exception:
-    pass
-if not on_render and _fs_detect_reasons:
-    on_render = True
-
 ALLOW_SQLITE_FALLBACK = os.getenv('ALLOW_SQLITE_FALLBACK') == '1'
 
-# Normalize older postgres:// URI to postgresql:// for SQLAlchemy compatibility.
 if raw_db_url and raw_db_url.startswith('postgres://'):
     raw_db_url = raw_db_url.replace('postgres://','postgresql://',1)
-
-# Prefer psycopg3 driver if available; ensure URL uses +psycopg so SQLAlchemy loads
-# the psycopg (v3) dialect rather than default psycopg2. Safe no-op if already contains a '+'.
 if raw_db_url and raw_db_url.startswith('postgresql://') and '+psycopg://' not in raw_db_url:
     raw_db_url = raw_db_url.replace('postgresql://', 'postgresql+psycopg://', 1)
 
-# Disallow implicit fallback in production. Only allow sqlite if explicitly opted-in.
 if not raw_db_url:
     missing_msg = ('No database URL environment variable found among: ' + ', '.join(possible_db_vars))
     if on_render or not ALLOW_SQLITE_FALLBACK:
@@ -68,12 +70,11 @@ if not raw_db_url:
         raise RuntimeError(
             missing_msg + '. ' +
             ('Set DATABASE_URL in the platform dashboard. ' if on_render else 'Set one locally or export ALLOW_SQLITE_FALLBACK=1 for dev sqlite. ') +
-            f'RenderDetected={on_render} RenderEnvKeys=[{env_keys_preview or "<none>"}] '
-            f'Heuristics={";".join(_fs_detect_reasons) or "none"}'
+            f'RenderDetected={on_render} RenderEnvKeys=[{env_keys_preview or "<none>"}] Heuristics={";".join(_fs_detect_reasons) or "none"}'
         )
-    # Development explicit fallback
     raw_db_url = 'sqlite:///local_dev.db'
     print('[startup] DEV SQLITE FALLBACK: using sqlite:///local_dev.db (set a DB URL or unset ALLOW_SQLITE_FALLBACK to force error)')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-insecure-key')
@@ -116,6 +117,12 @@ class Doctor(db.Model):
     hospitalid = db.Column(db.Integer, db.ForeignKey('hospitals.hospitalid'), nullable=False)
     email = db.Column(db.String, nullable=False)
     phone = db.Column(db.String, nullable=False)
+    gender = db.Column(db.String)
+    date_of_birth = db.Column(db.Date)
+    medical_license_number = db.Column(db.String(50))
+    years_of_experience = db.Column(db.Integer)
+    professional_bio = db.Column(db.Text)
+    password = db.Column(db.String)  # hashed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Hospital(db.Model):
@@ -194,6 +201,77 @@ def calc_age(dob):
 def default_reason(val):
     return (val if val and str(val).strip() else 'Unstated')
 
+# ----------------------
+# Shared aggregation helpers (availability + reviews)
+# ----------------------
+DAY_ORDER = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+
+def _availability_blocks(rows):
+    """Convert DoctorAvailability rows into simple blocks list."""
+    blocks = []
+    for r in rows:
+        if r.dayname and r.starttime and r.endtime:
+            blocks.append({
+                'day': r.dayname,
+                'start': r.starttime.strftime('%H:%M'),
+                'end': r.endtime.strftime('%H:%M')
+            })
+    return blocks
+
+def summarize_availability(blocks):
+    """Produce compact summary string grouping identical time ranges across days."""
+    if not blocks:
+        return None
+    from collections import defaultdict
+    buckets = defaultdict(list)
+    for blk in blocks:
+        buckets[(blk['start'], blk['end'])].append(blk['day'])
+    segments = []
+    from datetime import datetime as dt
+    for (start, end), days in buckets.items():
+        days = sorted(set(days), key=lambda d: DAY_ORDER.index(d) if d in DAY_ORDER else 99)
+        def _fmt(t):
+            return dt.strptime(t, '%H:%M').strftime('%I:%M %p').lstrip('0')
+        segments.append((DAY_ORDER.index(days[0]) if days and days[0] in DAY_ORDER else 99,
+                          f"{', '.join(days)}: {_fmt(start)} - {_fmt(end)}"))
+    segments.sort(key=lambda x: x[0])
+    return ' | '.join(seg for _, seg in segments) if segments else None
+
+def get_availability_for_doctors(doctor_ids):
+    """Return mapping: doctorid -> (blocks list, summary). Single query to avoid N+1."""
+    if not doctor_ids:
+        return {}
+    rows = DoctorAvailability.query.filter(DoctorAvailability.doctorid.in_(doctor_ids)).all()
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for r in rows:
+        grouped[r.doctorid].append(r)
+    result = {}
+    for did, rlist in grouped.items():
+        blocks = _availability_blocks(rlist)
+        result[did] = {
+            'blocks': blocks,
+            'summary': summarize_availability(blocks)
+        }
+    return result
+
+def get_review_aggregates(doctor_ids):
+    """Return mapping doctorid -> {review_count, avg_rating}."""
+    if not doctor_ids:
+        return {}
+    from sqlalchemy import func
+    rows = db.session.query(
+        DoctorReview.doctorid,
+        func.count(DoctorReview.reviewid).label('review_count'),
+        func.avg(DoctorReview.rating).label('avg_rating')
+    ).filter(DoctorReview.doctorid.in_(doctor_ids)).group_by(DoctorReview.doctorid).all()
+    return {
+        r.doctorid: {
+            'review_count': int(r.review_count),
+            'avg_rating': float(r.avg_rating) if r.avg_rating is not None else None
+        } for r in rows
+    }
+
 def ensure_schema():
     """Idempotent best-effort schema adjustments.
 
@@ -214,6 +292,24 @@ def ensure_schema():
                     print('[ensure_schema] Added reason column')
                 except Exception:
                     pass
+        # --- doctors table additive columns (new doctor signup extended profile) ---
+        if 'doctors' in insp.get_table_names():
+            dcols = {c['name'] for c in insp.get_columns('doctors')}
+            col_additions = [
+                ('gender','ALTER TABLE doctors ADD COLUMN gender VARCHAR'),
+                ('date_of_birth','ALTER TABLE doctors ADD COLUMN date_of_birth DATE'),
+                ('medical_license_number','ALTER TABLE doctors ADD COLUMN medical_license_number VARCHAR(50)'),
+                ('years_of_experience','ALTER TABLE doctors ADD COLUMN years_of_experience INTEGER'),
+                ('professional_bio','ALTER TABLE doctors ADD COLUMN professional_bio TEXT'),
+                ('password','ALTER TABLE doctors ADD COLUMN password VARCHAR')
+            ]
+            for cname, ddl in col_additions:
+                if cname not in dcols:
+                    try:
+                        engine.execute(text(ddl))
+                        print('[ensure_schema] added doctors.'+cname)
+                    except Exception:
+                        pass
             if backend == 'postgresql':
                 # Unique constraint for slot
                 try:
@@ -405,73 +501,26 @@ def user_profile(user_id):
 # ----------------------
 @app.route('/doctors', methods=['GET'])
 def get_doctors():
-    # Fetch all doctors with hospital
     doctors = db.session.query(
         Doctor.doctorid, Doctor.name, Doctor.speciality, Doctor.email, Doctor.phone, Hospital.name.label('hospital_name')
     ).join(Hospital, Doctor.hospitalid == Hospital.hospitalid).all()
-
-    # Preload review aggregates in one query
-    from sqlalchemy import func
-    review_rows = db.session.query(
-        DoctorReview.doctorid,
-        func.count(DoctorReview.reviewid).label('review_count'),
-        func.avg(DoctorReview.rating).label('avg_rating')
-    ).group_by(DoctorReview.doctorid).all()
-    review_map = {r.doctorid: {'review_count': int(r.review_count), 'avg_rating': float(r.avg_rating) if r.avg_rating is not None else None} for r in review_rows}
-
-    # Preload all availability rows to avoid N+1 queries
-    avails = DoctorAvailability.query.all()
-    from collections import defaultdict
-    avails_by_doctor = defaultdict(list)
-    for a in avails:
-        avails_by_doctor[a.doctorid].append(a)
-
-    day_order = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-
-    def build_summary(rows):
-        if not rows:
-            return None
-        # Group days by identical time range
-        buckets = defaultdict(list)  # key: (start,end) -> [dayname]
-        for r in rows:
-            if not (r.starttime and r.endtime and r.dayname):
-                continue
-            buckets[(r.starttime, r.endtime)].append(r.dayname)
-        segments = []
-        for (start, end), days in buckets.items():
-            # Sort days according to week order
-            days = sorted(set(days), key=lambda d: day_order.index(d) if d in day_order else 99)
-            start_str = start.strftime('%I:%M %p').lstrip('0')
-            end_str = end.strftime('%I:%M %p').lstrip('0')
-            segments.append((day_order.index(days[0]) if days[0] in day_order else 99,
-                              f"{', '.join(days)}: {start_str} - {end_str}"))
-        # Sort segments by first day occurrence
-        segments.sort(key=lambda x: x[0])
-        return ' | '.join(seg for _, seg in segments) if segments else None
-
+    ids = [d.doctorid for d in doctors]
+    review_map = get_review_aggregates(ids)
+    availability_map = get_availability_for_doctors(ids)
     result = []
-    for doc in doctors:
-        rows = avails_by_doctor.get(doc.doctorid, [])
-        summary = build_summary(rows)
-        availability_blocks = []
-        for r in rows:
-            if r.dayname and r.starttime and r.endtime:
-                availability_blocks.append({
-                    'day': r.dayname,
-                    'start': r.starttime.strftime('%H:%M'),
-                    'end': r.endtime.strftime('%H:%M')
-                })
+    for d in doctors:
+        avail_info = availability_map.get(d.doctorid, {})
         result.append({
-            'doctorid': doc.doctorid,
-            'name': doc.name,
-            'speciality': doc.speciality,
-            'email': doc.email,
-            'phone': doc.phone,
-            'hospital': doc.hospital_name,
-            'availability_summary': summary,
-            'availability_blocks': availability_blocks,
-            'review_count': review_map.get(doc.doctorid, {}).get('review_count', 0),
-            'avg_rating': review_map.get(doc.doctorid, {}).get('avg_rating')
+            'doctorid': d.doctorid,
+            'name': d.name,
+            'speciality': d.speciality,
+            'email': d.email,
+            'phone': d.phone,
+            'hospital': d.hospital_name,
+            'availability_summary': avail_info.get('summary'),
+            'availability_blocks': avail_info.get('blocks', []),
+            'review_count': review_map.get(d.doctorid, {}).get('review_count', 0),
+            'avg_rating': review_map.get(d.doctorid, {}).get('avg_rating')
         })
     return jsonify(result)
 
@@ -754,39 +803,10 @@ def get_doctor_detail(doctor_id):
     if not doc:
         return json_error('Doctor not found', 404)
     doctor, hospital = doc
-    from sqlalchemy import func
-    agg = db.session.query(
-        func.count(DoctorReview.reviewid), func.avg(DoctorReview.rating)
-    ).filter(DoctorReview.doctorid==doctor_id).first()
-    review_count = int(agg[0]) if agg and agg[0] is not None else 0
-    avg_rating = float(agg[1]) if agg and agg[1] is not None else None
-    # Gather availability
-    from collections import defaultdict
-    rows = DoctorAvailability.query.filter_by(doctorid=doctor_id).all()
-    day_order = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-    availability_blocks = []
-    for r in rows:
-        if r.dayname and r.starttime and r.endtime:
-            availability_blocks.append({
-                'day': r.dayname,
-                'start': r.starttime.strftime('%H:%M'),
-                'end': r.endtime.strftime('%H:%M')
-            })
-    # summary reuse
-    buckets = defaultdict(list)
-    for blk in availability_blocks:
-        buckets[(blk['start'], blk['end'])].append(blk['day'])
-    segments = []
-    for (start,end), days in buckets.items():
-        days = sorted(set(days), key=lambda d: day_order.index(d) if d in day_order else 99)
-        from datetime import datetime as dt
-        # convert times to 12h
-        def fmt(t):
-            return dt.strptime(t, '%H:%M').strftime('%I:%M %p').lstrip('0')
-        segments.append((day_order.index(days[0]) if days[0] in day_order else 99, f"{', '.join(days)}: {fmt(start)} - {fmt(end)}"))
-    segments.sort(key=lambda x: x[0])
-    availability_summary = ' | '.join(seg for _, seg in segments) if segments else None
-
+    review_map = get_review_aggregates([doctor_id])
+    review_info = review_map.get(doctor_id, {'review_count': 0, 'avg_rating': None})
+    avail_map = get_availability_for_doctors([doctor_id])
+    avail_info = avail_map.get(doctor_id, {'blocks': [], 'summary': None})
     return jsonify({
         'doctorid': doctor.doctorid,
         'name': doctor.name,
@@ -794,10 +814,10 @@ def get_doctor_detail(doctor_id):
         'email': doctor.email,
         'phone': doctor.phone,
         'hospital': hospital.name,
-        'availability_blocks': availability_blocks,
-        'availability_summary': availability_summary,
-        'review_count': review_count,
-        'avg_rating': avg_rating
+        'availability_blocks': avail_info.get('blocks', []),
+        'availability_summary': avail_info.get('summary'),
+        'review_count': review_info.get('review_count', 0),
+        'avg_rating': review_info.get('avg_rating')
     })
 
 # ----------------------
