@@ -31,6 +31,11 @@
     .day-btn { transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
     .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
     .day-btn.active-day:focus { outline:2px solid rgba(37,99,235,0.6); outline-offset:2px; }
+    /* Availability list styling adjustments to prevent overflow */
+    #availabilityList .avail-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:.55rem .75rem; font-size:.75rem; line-height:1.1; }
+    #availabilityList .avail-row .info { flex:1; min-width:0; }
+    #availabilityList .avail-row .info span { display:inline-block; }
+    #availabilityList .avail-row .remove-span { white-space:nowrap; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -388,16 +393,15 @@
             const end = endHour+':00';
             const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
             if(!selectedDays.length){ toast('Select at least one day'); return; }
-            if(!start || !end){ toast('Start & end times required'); return; }
-            // Convert to HH:MM 24h, ensure start < end
-            if(start >= end){ toast('Start time must be before end time'); return; }
+            if(start >= end){ toast('End hour must be after start'); return; }
             const abbrevMap = {sunday:'Sun',monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat'};
+            // Disallow any day that already exists in ANY block (ignore time differences)
+            const existingDays = new Set(availabilityBlocks.map(b=>b.day));
+            const conflict = selectedDays.some(d=> existingDays.has(abbrevMap[d.getAttribute('data-day')]));
+            if(conflict){ toast('One or more selected days already added'); return; }
             selectedDays.forEach(d=>{
                 const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
-                // prevent duplicate identical span for same day
-                if(!availabilityBlocks.some(b=>b.day===day && b.start===start && b.end===end)){
-                    availabilityBlocks.push({day: day, start: start, end: end});
-                }
+                availabilityBlocks.push({day: day, start: start, end: end});
             });
             renderAvailability();
         });
@@ -407,13 +411,13 @@
             if(!availabilityBlocks.length){ availabilityList.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
             const grouped = {};
             availabilityBlocks.forEach(b=>{ const key = b.start+'-'+b.end; grouped[key]=grouped[key]||[]; grouped[key].push(b.day); });
-            availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
-                const [st,en]=range.split('-');
-                return `<div class='flex items-center justify-between bg-gray-50 border border-gray-200 rounded p-2 text-xs'>
-                  <div><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
-                  <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
-                </div>`;
-            }).join('');
+                        availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
+                                const [st,en]=range.split('-');
+                                return `<div class='avail-row'>
+                                    <div class='info truncate'><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
+                                    <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
+                                </div>`;
+                        }).join('');
             availabilityList.querySelectorAll('.remove-span').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     const [st,en]=btn.getAttribute('data-range').split('-');
@@ -465,10 +469,14 @@
                                 const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
                                 const abbrevMap = {sunday:'Sun',monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat'};
                                 if(selectedDays.length && start && end && start < end){
-                                        selectedDays.forEach(d=>{
-                                            const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
-                                            availabilityBlocks.push({day: day, start: start, end: end});
-                                        });
+                                        const existingDays = new Set(availabilityBlocks.map(b=>b.day));
+                                        const conflict = selectedDays.some(d=> existingDays.has(abbrevMap[d.getAttribute('data-day')]));
+                                        if(!conflict){
+                                            selectedDays.forEach(d=>{
+                                                const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
+                                                availabilityBlocks.push({day: day, start: start, end: end});
+                                            });
+                                        }
                                 }
                         }
                         payload.availability = availabilityBlocks;
