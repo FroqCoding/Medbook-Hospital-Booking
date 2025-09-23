@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Profile - MedBook</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -44,7 +45,7 @@
                     <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
                 </div>
                 <div class="flex items-center" id="navAuthBlock">
-                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Log in</a>
                 </div>
             </div>
         </div>
@@ -243,7 +244,7 @@
                         if(did) window.location.href='doc-profile.html?doctorid='+did;});
                     document.getElementById('docLogoutNav').addEventListener('click',()=>{localStorage.removeItem('doctorLoggedIn');localStorage.removeItem('doctorId');localStorage.removeItem('doctorName');window.location.href='doctor_login.html';});
                 } else {
-                    nav.innerHTML = `<a href='doctor_login.html' class='bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'>Doctor Login</a>`;
+                    nav.innerHTML = `<a href='doctor_login.html' class='bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'>Doctor Log In</a>`;
                 }
             }
             loadDoctor();

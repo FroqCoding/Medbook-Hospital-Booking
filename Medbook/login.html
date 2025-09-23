@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MedBook</title>
+    <title>Log In - MedBook</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -35,7 +36,7 @@
                 </div>
                 </div>
                 <div class="flex items-center" id="navUserAction">
-                    <a href="login.html" class="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Login</a>
+                    <a href="login.html" class="btn btn-primary">Log in</a>
                 </div>
             </div>
         </div>
@@ -49,7 +50,7 @@
                     <div class="lg:col-span-2">
                         <div class="sm:mx-auto sm:w-full sm:max-w-xl">
                             <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                                    Sign in to your account
+                                    Log in to your account
                             </h2>
                         </div>
                         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
@@ -57,13 +58,13 @@
                 <!-- Social Login -->
                 <div class="space-y-4">
                     <div>
-                        <button type="button" class="social-btn w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-150">
+                        <button type="button" class="social-btn w-full btn btn-secondary">
                             <img class="h-5 w-5" src="https://www.google.com/favicon.ico" alt="Google">
                             <span class="ml-2">Sign in with Google</span>
                         </button>
                     </div>
                     <div>
-                        <button type="button" class="social-btn w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-150">
+                        <button type="button" class="social-btn w-full btn btn-secondary">
                             <img class="h-5 w-5" src="https://www.apple.com/favicon.ico" alt="Apple">
                             <span class="ml-2">Sign in with Apple</span>
                         </button>
@@ -88,14 +89,14 @@
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
                         <div class="mt-1">
-                            <input id="email" name="email" type="email" autocomplete="email" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input id="email" name="email" type="email" autocomplete="email" required class="input" >
                         </div>
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                         <div class="mt-1">
-                            <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="input">
                         </div>
                     </div>
 
@@ -111,8 +112,8 @@
                     </div>
 
                     <div>
-                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Sign in
+                        <button type="submit" class="btn btn-primary full-width">
+                            Log in
                         </button>
                     </div>
                 </form>
@@ -259,7 +260,7 @@
                     // Switch to signup form
                     loginForm.classList.add('hidden');
                     signupForm.classList.remove('hidden');
-                    toggleBtn.textContent = 'Already have an account? Sign in';
+                    toggleBtn.textContent = 'Already have an account? Log in';
                 }
             });
 

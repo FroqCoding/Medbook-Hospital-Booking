@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Doctor Login - MedBook</title>
+  <title>Doctor Log In - MedBook</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/feather-icons"></script>
   <style>body{font-family:Inter, sans-serif}</style>
 </head>
@@ -13,26 +14,26 @@
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <a href="index.html" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 font-bold text-xl text-gray-900">MedBook</span></a>
       <div class="flex items-center space-x-4 text-sm">
-        <a href="login.html" class="text-gray-500 hover:text-gray-700">User Login</a>
-        <a href="doctor_signup.html" class="text-blue-600 hover:underline">Doctor Sign Up</a>
+  <a href="login.html" class="btn btn-secondary">User Log In</a>
+    <a href="doctor_signup.html" class="btn btn-primary">Doctor Sign Up</a>
       </div>
     </div>
   </nav>
   <main class="flex-grow flex items-center justify-center p-6">
     <div class="bg-white w-full max-w-md rounded-lg shadow p-8">
-      <h1 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Doctor Login</h1>
+  <h1 class="text-2xl font-semibold text-gray-900 mb-6 text-center">Doctor Log In</h1>
       <form id="doctorLoginForm" class="space-y-5">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input type="email" id="docEmail" class="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" required />
+          <input type="email" id="docEmail" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" required />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input type="password" id="docPassword" class="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" required />
+          <input type="password" id="docPassword" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm" required />
         </div>
-        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white rounded-md py-2 text-sm font-medium">Login</button>
+  <button type="submit" class="btn btn-primary full-width">Log in</button>
       </form>
-      <p class="mt-4 text-center text-xs text-gray-500">Need an account? <a href="doctor_signup.html" class="text-blue-600 hover:underline">Sign up</a></p>
+      <p class="mt-4 text-center text-xs text-gray-500">Need an account? <a href="doctor_signup.html" class="font-medium text-blue-600 hover:text-blue-500">Sign up</a></p>
       <div id="loginError" class="hidden mt-4 text-xs text-red-600 text-center"></div>
     </div>
   </main>
@@ -44,11 +45,28 @@
       e.preventDefault();
       const email = document.getElementById('docEmail').value.trim();
       const password = document.getElementById('docPassword').value.trim();
-      const err = document.getElementById('loginError'); err.classList.add('hidden');
+      const err = document.getElementById('loginError'); 
+      err.classList.add('hidden');
+      
+      // Basic validation
+      if (!email || !password) {
+        err.textContent = 'Please fill in all fields';
+        err.classList.remove('hidden');
+        return;
+      }
+      
       try{
-        const r = await fetch(`${window.location.origin}/doctors/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+        const r = await fetch(`${window.location.origin}/doctors/login`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email,password})
+        });
         const j = await r.json();
-        if(!r.ok){ err.textContent = j.message||'Login failed'; err.classList.remove('hidden'); return; }
+        if(!r.ok){ 
+          err.textContent = j.message||'Log in failed'; 
+          err.classList.remove('hidden'); 
+          return; 
+        }
         localStorage.setItem('doctorLoggedIn','true');
         localStorage.setItem('doctorId', j.doctorid);
         localStorage.setItem('doctorName', j.name || 'Doctor');
@@ -56,7 +74,10 @@
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userId');
         window.location.href = `doc-profile.html?doctorid=${j.doctorid}`;
-      }catch(ex){ err.textContent='Network error'; err.classList.remove('hidden'); }
+      }catch(ex){ 
+        err.textContent='Network error'; 
+        err.classList.remove('hidden'); 
+      }
     });
   </script>
 </body>

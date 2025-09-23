@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Sign Up - MedBook</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -488,7 +489,7 @@
                 const res = await fetch(`${window.location.origin}/doctors/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
                 const json = await res.json();
                 if(!res.ok){ toast(json.message||'Registration failed'); return; }
-                toast('Registered! Redirecting to doctor login');
+                toast('Registered! Redirecting to doctor log in');
                 setTimeout(()=>{ window.location.href='doctor_login.html'; },1200);
             } catch(err){ console.error(err); toast('Network error'); }
         });
