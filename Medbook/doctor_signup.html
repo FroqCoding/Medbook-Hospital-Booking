@@ -32,10 +32,14 @@
     .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
     .day-btn.active-day:focus { outline:2px solid rgba(37,99,235,0.6); outline-offset:2px; }
     /* Availability list styling adjustments to prevent overflow */
-    #availabilityList .avail-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:.55rem .75rem; font-size:.75rem; line-height:1.1; }
-    #availabilityList .avail-row .info { flex:1; min-width:0; }
-    #availabilityList .avail-row .info span { display:inline-block; }
-    #availabilityList .avail-row .remove-span { white-space:nowrap; }
+    #availabilityList { max-height:220px; overflow-y:auto; padding-right:2px; }
+    #availabilityList::-webkit-scrollbar { width:6px; }
+    #availabilityList::-webkit-scrollbar-track { background:transparent; }
+    #availabilityList::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:3px; }
+    #availabilityList .avail-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; padding:.6rem .75rem; font-size:.75rem; line-height:1.1; width:100%; box-sizing:border-box; }
+    #availabilityList .avail-row .info { flex:1; min-width:0; word-break:break-word; }
+    #availabilityList .avail-row .info span { display:inline; }
+    #availabilityList .avail-row .remove-span { white-space:nowrap; flex-shrink:0; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -411,13 +415,13 @@
             if(!availabilityBlocks.length){ availabilityList.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
             const grouped = {};
             availabilityBlocks.forEach(b=>{ const key = b.start+'-'+b.end; grouped[key]=grouped[key]||[]; grouped[key].push(b.day); });
-                        availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
-                                const [st,en]=range.split('-');
-                                return `<div class='avail-row'>
-                                    <div class='info truncate'><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
-                                    <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
-                                </div>`;
-                        }).join('');
+                                    availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
+                                            const [st,en]=range.split('-');
+                                            return `<div class='avail-row'>
+                                                <div class='info'><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
+                                                <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
+                                            </div>`;
+                                    }).join('');
             availabilityList.querySelectorAll('.remove-span').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     const [st,en]=btn.getAttribute('data-range').split('-');
