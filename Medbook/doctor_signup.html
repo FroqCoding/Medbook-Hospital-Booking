@@ -27,10 +27,10 @@
         .step-circle { transition: background-color .35s ease, transform .35s ease; }
         .step-circle.active-step { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
         .step-label { transition: color .35s ease; }
-        /* Active day (working day) button styling */
-        .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
-        .day-btn:not(.active-day){ transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
-        .day-btn.active-day:focus { outline:2px solid rgba(37,99,235,0.6); outline-offset:2px; }
+    /* Active day (working day) button styling */
+    .day-btn { transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+    .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
+    .day-btn.active-day:focus { outline:2px solid rgba(37,99,235,0.6); outline-offset:2px; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -214,12 +214,12 @@
                     
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         <div>
-                            <label for="startTime" class="block text-sm font-medium text-gray-700">Start Time</label>
-                            <input type="time" id="startTime" step="1800" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="startHour" class="block text-sm font-medium text-gray-700">Start Hour (24h)</label>
+                            <select id="startHour" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></select>
                         </div>
                         <div>
-                            <label for="endTime" class="block text-sm font-medium text-gray-700">End Time</label>
-                            <input type="time" id="endTime" step="1800" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="endHour" class="block text-sm font-medium text-gray-700">End Hour (24h)</label>
+                            <select id="endHour" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></select>
                         </div>
                     </div>
                     
@@ -356,41 +356,36 @@
             if (active) document.getElementById('stepsContainer').style.height = active.offsetHeight + 'px';
         });
 
+        // Populate hour dropdowns (00 - 23)
+        function populateHourSelect(id, defaultVal){
+            const sel = document.getElementById(id);
+            if(!sel) return;
+            sel.innerHTML = '<option value="" disabled>Select hour</option>' +
+                Array.from({length:24}, (_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}:00</option>`).join('');
+            sel.value = defaultVal;
+        }
+        populateHourSelect('startHour','09');
+        populateHourSelect('endHour','17');
+
         // Availability day button toggles (ensures blue highlight when active)
         const dayButtons = document.querySelectorAll('.day-btn');
         dayButtons.forEach(btn=>{
+            btn.setAttribute('aria-pressed','false');
             btn.addEventListener('click',()=>{
-                const active = btn.classList.contains('active-day');
-                if(active){
-                    btn.classList.remove('active-day');
-                } else {
-                    btn.classList.add('active-day');
-                }
+                const newState = !btn.classList.contains('active-day');
+                btn.classList.toggle('active-day', newState);
+                btn.setAttribute('aria-pressed', newState ? 'true' : 'false');
             });
-        });
-
-        // Snap time inputs to 30-minute boundaries even if browser lets custom minutes
-        function snapToHalfHour(value){
-            if(!value) return value;
-            const [h,m] = value.split(':').map(Number);
-            if(isNaN(h) || isNaN(m)) return value;
-            const total = h*60 + m;
-            const snapped = Math.round(total / 30) * 30; // nearest 30
-            const nh = String(Math.floor(snapped/60)).padStart(2,'0');
-            const nm = String(snapped%60).padStart(2,'0');
-            return `${nh}:${nm}`;
-        }
-        ['startTime','endTime'].forEach(id=>{
-            const el = document.getElementById(id);
-            el.addEventListener('change',()=>{ el.value = snapToHalfHour(el.value); });
-            el.addEventListener('blur',()=>{ el.value = snapToHalfHour(el.value); });
         });
 
         const availabilityList = document.getElementById('availabilityList');
     const availabilityBlocks = []; // {day,start,end}
         document.getElementById('addAvailability').addEventListener('click',()=>{
-            const start = document.getElementById('startTime').value;
-            const end = document.getElementById('endTime').value;
+            const startHour = document.getElementById('startHour').value;
+            const endHour = document.getElementById('endHour').value;
+            if(!startHour || !endHour){ toast('Select start & end hours'); return; }
+            const start = startHour+':00';
+            const end = endHour+':00';
             const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
             if(!selectedDays.length){ toast('Select at least one day'); return; }
             if(!start || !end){ toast('Start & end times required'); return; }
@@ -400,8 +395,8 @@
             selectedDays.forEach(d=>{
                 const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
                 // prevent duplicate identical span for same day
-                if(!availabilityBlocks.some(b=>b.day===day && b.start===start.slice(0,5) && b.end===end.slice(0,5))){
-                    availabilityBlocks.push({day: day, start: start.slice(0,5), end: end.slice(0,5)});
+                if(!availabilityBlocks.some(b=>b.day===day && b.start===start && b.end===end)){
+                    availabilityBlocks.push({day: day, start: start, end: end});
                 }
             });
             renderAvailability();
@@ -463,14 +458,16 @@
             if(missing.length){ toast('Missing: '+missing.slice(0,4).join(', ')); return; }
                         // If user forgot to click Add Availability but selected days + times, auto add one block
                         if(!availabilityBlocks.length){
-                                const start = document.getElementById('startTime').value;
-                                const end = document.getElementById('endTime').value;
+                                const sh = document.getElementById('startHour').value;
+                                const eh = document.getElementById('endHour').value;
+                                const start = sh? sh+':00' : '';
+                                const end = eh? eh+':00' : '';
                                 const selectedDays = Array.from(dayButtons).filter(b=>b.classList.contains('active-day'));
                                 const abbrevMap = {sunday:'Sun',monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat'};
                                 if(selectedDays.length && start && end && start < end){
                                         selectedDays.forEach(d=>{
                                             const day = abbrevMap[d.getAttribute('data-day')] || 'Mon';
-                                            availabilityBlocks.push({day: day, start: start.slice(0,5), end: end.slice(0,5)});
+                                            availabilityBlocks.push({day: day, start: start, end: end});
                                         });
                                 }
                         }
