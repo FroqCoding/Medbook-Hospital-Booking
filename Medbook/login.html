@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In - MedBook</title>
+    <title>Login - MedBook</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -19,7 +19,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm">
+    <nav class="bg-white shadow-sm" x-data="{open:false}">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center flex-shrink-0">
@@ -28,16 +28,26 @@
                     <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
                     </a>
                 </div>
-                <div class="flex-1 flex justify-center">
-                <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
-                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
-                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                <button id="mobileNavToggle" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-controls="primaryNav" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                <div class="hidden md:flex md:items-center md:space-x-8" id="primaryNav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="doctors.html" class="nav-link">Doctors</a>
+                    <a href="about.html" class="nav-link">About</a>
                 </div>
-                </div>
-                <div class="flex items-center" id="navUserAction">
-                    <a href="login.html" class="btn btn-primary">Log in</a>
-                </div>
+                <!-- Removed self-referential login button on login page -->
+                <div class="hidden md:flex items-center" id="navUserAction"></div>
+            </div>
+        </div>
+        <!-- Mobile panel -->
+        <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-200 bg-white" role="menu" aria-label="Mobile navigation">
+            <div class="px-4 pt-4 pb-3 space-y-1">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</a>
+                <a href="doctors.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
+                <a href="about.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
+                <!-- Removed self-referential mobile login link on login page -->
             </div>
         </div>
     </nav>
@@ -49,9 +59,9 @@
                     <!-- Auth Column -->
                     <div class="lg:col-span-2">
                         <div class="sm:mx-auto sm:w-full sm:max-w-xl">
-                            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                                    Log in to your account
-                            </h2>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    Login to your account
+                </h2>
                         </div>
                         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
                             <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -113,7 +123,7 @@
 
                     <div>
                         <button type="submit" class="btn btn-primary full-width">
-                            Log in
+                            Login
                         </button>
                     </div>
                 </form>
@@ -228,7 +238,7 @@
         </div>
 
     <div id="successNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
-        Account created successfully. Proceed to log in.
+    Account created successfully. Proceed to login.
     </div>
 
     <div id="errorNotification" class="hidden opacity-0 fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-500 bg-opacity-90 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-300">
@@ -260,7 +270,7 @@
                     // Switch to signup form
                     loginForm.classList.add('hidden');
                     signupForm.classList.remove('hidden');
-                    toggleBtn.textContent = 'Already have an account? Log in';
+                    toggleBtn.textContent = 'Already have an account? Login';
                 }
             });
 
@@ -363,4 +373,24 @@
         });
     </script>
 </body>
+<script>
+    // Basic mobile nav toggler shared pattern
+    (function(){
+        const btn = document.getElementById('mobileNavToggle');
+        const panel = document.getElementById('mobileNavPanel');
+        if(!btn || !panel) return;
+        btn.addEventListener('click',()=>{
+            const isOpen = panel.classList.contains('hidden') === false;
+            if(isOpen){
+                panel.classList.add('hidden');
+                btn.setAttribute('aria-expanded','false');
+                btn.innerHTML = '<span class="sr-only">Open main menu</span><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>';
+            } else {
+                panel.classList.remove('hidden');
+                btn.setAttribute('aria-expanded','true');
+                btn.innerHTML = '<span class="sr-only">Close main menu</span><svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            }
+        });
+    })();
+</script>
 </html>
