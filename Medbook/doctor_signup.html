@@ -452,7 +452,11 @@
 
         document.getElementById('doctorSignupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            const first = document.getElementById('firstName').value.trim();
+            const last = document.getElementById('lastName').value.trim();
+            const fullName = [first, last].filter(Boolean).join(' ').trim();
             const payload = {
+                name: fullName,
                 first_name: document.getElementById('firstName').value.trim(),
                 last_name: document.getElementById('lastName').value.trim(),
                 email: document.getElementById('email').value.trim(),
@@ -466,9 +470,18 @@
                 bio: document.getElementById('bio').value.trim(),
                 password: (document.getElementById('email').value.split('@')[0] + '123').slice(0,32) // TEMP: simple default or could add password fields
             };
-            // Basic validation
-            const missing = Object.entries(payload).filter(([k,v])=>!v).map(([k])=>k);
-            if(missing.length){ toast('Missing: '+missing.slice(0,4).join(', ')); return; }
+            // Basic validation with friendlier labels
+            const labels = {
+                name:'name',
+                email:'email',
+                phone:'phone',
+                speciality:'specialty',
+                hospital:'hospital/clinic',
+                password:'password'
+            };
+            const requiredKeys = ['name','email','phone','speciality','hospital','password'];
+            const missing = requiredKeys.filter(k=>!payload[k]);
+            if(missing.length){ toast('Missing: '+missing.map(k=>labels[k]||k).join(', ')); return; }
                         // If user forgot to click Add Availability but selected days + times, auto add one block
                         if(!availabilityBlocks.length){
                                 const sh = document.getElementById('startHour').value;
