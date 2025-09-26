@@ -778,7 +778,7 @@ def serve_root():
 @app.route('/<path:page>')
 def serve_page(page):
     allowed = {
-        'index.html','doctors.html','booking.html','confirm.html','profile.html','login.html','about.html','doc-profile.html','doctor_signup.html'
+        'index.html','doctors.html','booking.html','confirm.html','profile.html','login.html','about.html','doc-profile.html','doctor_signup.html','doctor_login.html'
     }
     if page in allowed:
         return send_from_directory(_FRONTEND_DIR, page)
