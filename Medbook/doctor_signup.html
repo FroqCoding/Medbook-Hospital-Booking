@@ -416,13 +416,17 @@
             if(!availabilityBlocks.length){ availabilityList.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
             const grouped = {};
             availabilityBlocks.forEach(b=>{ const key = b.start+'-'+b.end; grouped[key]=grouped[key]||[]; grouped[key].push(b.day); });
-                                    availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
-                                            const [st,en]=range.split('-');
-                                            return `<div class='avail-row'>
-                                                <div class='info'><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
-                                                <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
-                                            </div>`;
-                                    }).join('');
+            availabilityList.innerHTML = Object.entries(grouped).map(([range,days])=>{
+                const [st,en]=range.split('-');
+                return `<div class='avail-row'>
+                    <div class='info'><span class='font-medium'>${days.sort().join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
+                    <button type='button' class='text-red-500 hover:underline remove-span' data-range='${range}'>Remove</button>
+                </div>`;
+            }).join('');
+            // Force reflow to fix bar not resizing until inspect
+            availabilityList.style.display = 'none';
+            void availabilityList.offsetHeight;
+            availabilityList.style.display = '';
             availabilityList.querySelectorAll('.remove-span').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     const [st,en]=btn.getAttribute('data-range').split('-');
