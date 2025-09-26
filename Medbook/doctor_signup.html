@@ -503,11 +503,25 @@
                         }
                         payload.availability = availabilityBlocks;
             try {
-                const res = await fetch(`${window.location.origin}/doctors/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-                const json = await res.json();
-                if(!res.ok){ toast(json.message||'Registration failed'); return; }
-                toast('Application submitted. Await admin approval. Redirecting to doctor log in');
-                setTimeout(()=>{ window.location.href='doctor_login.html'; },1200);
+                const res = await fetch(`${window.location.origin}/doctors/register`,{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify(payload)
+                });
+                let json;
+                try {
+                    json = await res.json();
+                } catch(parseErr){
+                    const text = await res.text().catch(()=> '');
+                    json = { message: text };
+                }
+                if(!res.ok){
+                    const msg = (json && json.message) ? json.message : `Registration failed (HTTP ${res.status})`;
+                    toast(msg);
+                    return;
+                }
+                toast('Application submitted. Await admin approval. Redirecting to home');
+                setTimeout(()=>{ window.location.href='index.html'; },1200);
             } catch(err){ console.error(err); toast('Network error'); }
         });
     </script>
