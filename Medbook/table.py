@@ -123,6 +123,11 @@ class Doctor(db.Model):
     years_of_experience = db.Column(db.Integer)
     professional_bio = db.Column(db.Text)
     password = db.Column(db.String)  # hashed
+    # Approval workflow (Option B)
+    approval_status = db.Column(db.String, nullable=False, default='pending')  # pending|approved|rejected|suspended
+    approved_at = db.Column(db.DateTime)
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.userid'))
+    rejection_reason = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Hospital(db.Model):
@@ -301,7 +306,12 @@ def ensure_schema():
                 ('medical_license_number','ALTER TABLE doctors ADD COLUMN medical_license_number VARCHAR(50)'),
                 ('years_of_experience','ALTER TABLE doctors ADD COLUMN years_of_experience INTEGER'),
                 ('professional_bio','ALTER TABLE doctors ADD COLUMN professional_bio TEXT'),
-                ('password','ALTER TABLE doctors ADD COLUMN password VARCHAR')
+                ('password','ALTER TABLE doctors ADD COLUMN password VARCHAR'),
+                # Approval workflow columns
+                ('approval_status',"ALTER TABLE doctors ADD COLUMN approval_status VARCHAR NOT NULL DEFAULT 'pending'"),
+                ('approved_at','ALTER TABLE doctors ADD COLUMN approved_at TIMESTAMP'),
+                ('approved_by','ALTER TABLE doctors ADD COLUMN approved_by INTEGER REFERENCES users(userid)'),
+                ('rejection_reason','ALTER TABLE doctors ADD COLUMN rejection_reason TEXT')
             ]
             for cname, ddl in col_additions:
                 if cname not in dcols:
@@ -310,6 +320,14 @@ def ensure_schema():
                         print('[ensure_schema] added doctors.'+cname)
                     except Exception:
                         pass
+            # Index on approval_status for filtering
+            try:
+                if backend == 'postgresql':
+                    engine.execute(text('CREATE INDEX IF NOT EXISTS idx_doctors_approval_status ON doctors(approval_status)'))
+                else:
+                    engine.execute(text('CREATE INDEX IF NOT EXISTS idx_doctors_approval_status ON doctors(approval_status)'))
+            except Exception:
+                pass
             if backend == 'postgresql':
                 # Unique constraint for slot
                 try:
@@ -446,6 +464,118 @@ def register_user():
     return jsonify({'message': 'User registered successfully'}), 201
 
 # ----------------------
+# Register Doctor (pending approval)
+# ----------------------
+@app.route('/doctors/register', methods=['POST'])
+def register_doctor():
+    data = request.get_json() or {}
+    required = ['name','email','phone','speciality','hospital','password']
+    missing = [k for k in required if not str(data.get(k,'' )).strip()]
+    if missing:
+        return json_error('Missing: '+', '.join(missing), 400)
+
+    # Ensure hospital exists or create
+    hosp_name = data.get('hospital').strip()
+    hospital = Hospital.query.filter(Hospital.name.ilike(hosp_name)).first()
+    if not hospital:
+        hospital = Hospital(name=hosp_name)
+        db.session.add(hospital)
+        db.session.flush()
+
+    hashed = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+    doctor = Doctor(
+        name=data['name'].strip(),
+        email=data['email'].strip(),
+        phone=data['phone'].strip(),
+        speciality=data['speciality'].strip(),
+        hospitalid=hospital.hospitalid,
+        gender=(data.get('gender') or None),
+        date_of_birth=datetime.strptime(data['date_of_birth'],'%Y-%m-%d').date() if data.get('date_of_birth') else None,
+        medical_license_number=(data.get('medical_license_number') or None),
+        years_of_experience=int(data['experience']) if str(data.get('experience','')).isdigit() else None,
+        professional_bio=(data.get('bio') or None),
+        password=hashed,
+        approval_status='pending'
+    )
+    db.session.add(doctor)
+    db.session.flush()
+
+    # availability blocks
+    blocks = data.get('availability') or []
+    for b in blocks:
+        day = b.get('day'); start=b.get('start'); end=b.get('end')
+        if not day or not start or not end:
+            continue
+        try:
+            st = datetime.strptime(start,'%H:%M').time()
+            en = datetime.strptime(end,'%H:%M').time()
+        except Exception:
+            continue
+        db.session.add(DoctorAvailability(dayname=day, doctorid=doctor.doctorid, starttime=st, endtime=en))
+    db.session.commit()
+    return jsonify({'message':'Doctor submitted for approval','doctorid':doctor.doctorid}), 201
+
+# ----------------------
+# Doctor Login (must be approved)
+# ----------------------
+@app.route('/doctors/login', methods=['POST'])
+def doctor_login():
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip()
+    password = (data.get('password') or '').strip()
+    if not email or not password:
+        return json_error('Email and password required', 400)
+    doctor = Doctor.query.filter_by(email=email).first()
+    if not doctor or not doctor.password or not bcrypt.check_password_hash(doctor.password, password):
+        return json_error('Invalid credentials', 401)
+    if doctor.approval_status != 'approved':
+        return json_error('Doctor not approved', 403)
+    return jsonify({'doctorid': doctor.doctorid, 'name': doctor.name})
+
+# ----------------------
+# Admin endpoints to approve/reject doctor
+# Protect with X-Admin-Api-Key header if ADMIN_API_KEY env var set
+# ----------------------
+def _require_admin():
+    admin_key = os.getenv('ADMIN_API_KEY')
+    if not admin_key:
+        return True
+    return request.headers.get('X-Admin-Api-Key') == admin_key
+
+@app.route('/admin/doctors/<int:doctor_id>/approve', methods=['POST'])
+def approve_doctor(doctor_id):
+    if not _require_admin():
+        return json_error('Unauthorized', 401)
+    doc = Doctor.query.get(doctor_id)
+    if not doc:
+        return json_error('Doctor not found', 404)
+    doc.approval_status='approved'
+    doc.approved_at=datetime.utcnow()
+    # Optional: track approver if you pass X-Approver-UserId
+    try:
+        approver = int(request.headers.get('X-Approver-UserId','0'))
+        if approver:
+            doc.approved_by = approver
+    except Exception:
+        pass
+    db.session.commit()
+    return jsonify({'message':'approved','doctorid':doctor_id})
+
+@app.route('/admin/doctors/<int:doctor_id>/reject', methods=['POST'])
+def reject_doctor(doctor_id):
+    if not _require_admin():
+        return json_error('Unauthorized', 401)
+    data = request.get_json() or {}
+    reason = (data.get('reason') or '').strip() or None
+    doc = Doctor.query.get(doctor_id)
+    if not doc:
+        return json_error('Doctor not found', 404)
+    doc.approval_status='rejected'
+    doc.rejection_reason = reason
+    db.session.commit()
+    return jsonify({'message':'rejected','doctorid':doctor_id,'reason':reason})
+
+# ----------------------
 # Route to Login User
 # ----------------------
 @app.route('/users/login', methods=['POST'])
@@ -501,9 +631,10 @@ def user_profile(user_id):
 # ----------------------
 @app.route('/doctors', methods=['GET'])
 def get_doctors():
+    # Only return approved doctors publicly
     doctors = db.session.query(
         Doctor.doctorid, Doctor.name, Doctor.speciality, Doctor.email, Doctor.phone, Hospital.name.label('hospital_name')
-    ).join(Hospital, Doctor.hospitalid == Hospital.hospitalid).all()
+    ).join(Hospital, Doctor.hospitalid == Hospital.hospitalid).filter(Doctor.approval_status=='approved').all()
     ids = [d.doctorid for d in doctors]
     review_map = get_review_aggregates(ids)
     availability_map = get_availability_for_doctors(ids)
@@ -538,6 +669,10 @@ def get_doctor_availability(doctor_id):
         return jsonify({'message': 'Invalid date format, expected YYYY-MM-DD'}), 400
     # Map Python weekday to 3-letter form matching DB (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
     day_abbrev = target_date.strftime('%a')  # already correct capitalization
+    # Require approved doctor
+    doc_ok = Doctor.query.filter_by(doctorid=doctor_id, approval_status='approved').first()
+    if not doc_ok:
+        return jsonify([])
     avail = DoctorAvailability.query.filter_by(doctorid=doctor_id, dayname=day_abbrev).first()
     if not avail:
         return jsonify([])
@@ -799,7 +934,7 @@ def favicon():
 # ----------------------
 @app.route('/doctors/<int:doctor_id>', methods=['GET'])
 def get_doctor_detail(doctor_id):
-    doc = db.session.query(Doctor, Hospital).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Doctor.doctorid==doctor_id).first()
+    doc = db.session.query(Doctor, Hospital).join(Hospital, Doctor.hospitalid==Hospital.hospitalid).filter(Doctor.doctorid==doctor_id, Doctor.approval_status=='approved').first()
     if not doc:
         return json_error('Doctor not found', 404)
     doctor, hospital = doc

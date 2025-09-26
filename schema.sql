@@ -36,6 +36,11 @@ CREATE TABLE doctors (
   hospitalid INTEGER NOT NULL REFERENCES hospitals(hospitalid) ON DELETE CASCADE,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
+  -- Approval workflow
+  approval_status TEXT NOT NULL DEFAULT 'pending', -- pending|approved|rejected|suspended
+  approved_at TIMESTAMP NULL,
+  approved_by INTEGER NULL REFERENCES users(userid),
+  rejection_reason TEXT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -60,6 +65,7 @@ CREATE TABLE appointments (
 
 -- Indexes
 CREATE INDEX idx_doctors_hospital ON doctors(hospitalid);
+CREATE INDEX idx_doctors_approval_status ON doctors(approval_status);
 CREATE INDEX idx_availability_doctor ON doctor_availability(doctorid);
 CREATE INDEX idx_appointments_user ON appointments(userid);
 CREATE INDEX idx_appointments_doctor_date_time ON appointments(doctorid, appointment_date, appointment_time);

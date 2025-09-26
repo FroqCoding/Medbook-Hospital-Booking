@@ -493,7 +493,7 @@
                 const res = await fetch(`${window.location.origin}/doctors/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
                 const json = await res.json();
                 if(!res.ok){ toast(json.message||'Registration failed'); return; }
-                toast('Registered! Redirecting to doctor log in');
+                toast('Application submitted. Await admin approval. Redirecting to doctor log in');
                 setTimeout(()=>{ window.location.href='doctor_login.html'; },1200);
             } catch(err){ console.error(err); toast('Network error'); }
         });
