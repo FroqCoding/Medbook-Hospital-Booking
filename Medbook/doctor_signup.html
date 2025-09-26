@@ -269,6 +269,21 @@
         </div>
     </footer>
 
+    <!-- Success Modal -->
+    <div id="signupSuccessModal" class="hidden fixed inset-0 z-50 items-center justify-center">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative bg-white rounded-lg shadow-lg w-full max-w-md mx-4 p-6 text-center">
+            <div class="mx-auto mb-3 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Request submitted successfully</h3>
+            <p class="mt-2 text-sm text-gray-600">Thanks for applying to join MedBook. Our team will review your application and get back to you shortly.</p>
+            <div class="mt-6 flex justify-center">
+                <button id="successCloseBtn" class="inline-flex items-center rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         AOS.init({
             duration: 800,
@@ -520,8 +535,18 @@
                     toast(msg);
                     return;
                 }
-                toast('Application submitted. Await admin approval. Redirecting to home');
-                setTimeout(()=>{ window.location.href='index.html'; },1200);
+                // Show success modal instead of redirecting
+                const modal = document.getElementById('signupSuccessModal');
+                if(modal){
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    const closeBtn = document.getElementById('successCloseBtn');
+                    if(closeBtn){
+                        closeBtn.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+                    }
+                } else {
+                    toast('Application submitted. Await admin approval.');
+                }
             } catch(err){ console.error(err); toast('Network error'); }
         });
     </script>
