@@ -88,3 +88,10 @@ body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; 
 /* Transition utility for fade-up (mirrors AOS basic) */
 .fade-in { opacity:0; transform:translateY(8px); animation:fadeInUp .45s ease forwards; }
 @keyframes fadeInUp { to { opacity:1; transform:translateY(0); } }
+
+/* Reusable loading animation (namespaced) */
+.mb-loader { --uib-size:45px; --uib-color: currentColor; --uib-speed:1.75s; --uib-bg-opacity:.1; height:31.25px; width:50px; transform-origin:center; overflow:visible; display:inline-block; }
+.mb-loader .mb-car { stroke: var(--uib-color); stroke-dasharray:100; stroke-dashoffset:0; stroke-linecap:round; stroke-linejoin:round; animation: mb-travel var(--uib-speed) ease-in-out infinite, mb-fade var(--uib-speed) ease-out infinite; will-change: stroke-dasharray, stroke-dashoffset; transition: stroke .5s ease; }
+.mb-loader .mb-track { stroke-linecap:round; stroke-linejoin:round; stroke: var(--uib-color); opacity: var(--uib-bg-opacity); }
+@keyframes mb-travel { 0% { stroke-dashoffset:100; } 75% { stroke-dashoffset:0; } }
+@keyframes mb-fade { 0% { opacity:0; } 20%,55% { opacity:1; } 100% { opacity:0; } }

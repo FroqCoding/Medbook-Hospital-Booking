@@ -137,7 +137,14 @@
                 </select>
             </div>
         </div>
-        <div id="doctorsList" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+        <!-- Loader -->
+        <div id="doctorsLoader" class="w-full flex justify-center py-10">
+            <svg class="mb-loader text-gray-700" viewBox="0 0 50 31.25" height="31.25" width="50" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <path class="mb-track" stroke-width="4" fill="none" pathlength="100" d="M0.625 21.5 h10.25 l3.75 -5.875 l7.375 15 l9.75 -30 l7.375 20.875 v0 h10.25"/>
+                <path class="mb-car" stroke-width="4" fill="none" pathlength="100" d="M0.625 21.5 h10.25 l3.75 -5.875 l7.375 15 l9.75 -30 l7.375 20.875 v0 h10.25"/>
+            </svg>
+        </div>
+        <div id="doctorsList" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 hidden"></div>
         <div id="pagination" class="flex justify-center mt-8 space-x-2"></div>
     </div>
     <!-- <div class="mt-10 flex justify-center">
@@ -253,10 +260,19 @@ function getQueryParams() {
 }
 
 async function fetchDoctors() {
-    const res = await fetch(`${window.location.origin}/doctors`);
-    const doctors = await res.json();
-    allDoctors = doctors;
-    populateFilterOptions(doctors);
+    const loader = document.getElementById('doctorsLoader');
+    const list = document.getElementById('doctorsList');
+    if(loader) loader.classList.remove('hidden');
+    if(list) list.classList.add('hidden');
+    let doctors = [];
+    try {
+        const res = await fetch(`${window.location.origin}/doctors`);
+        doctors = await res.json();
+    } catch (e) {
+        console.error('Failed to load doctors', e);
+    }
+    allDoctors = doctors || [];
+    populateFilterOptions(allDoctors);
     // Apply filters from query params if present
     const params = getQueryParams();
     if (params.specialty) {
@@ -268,6 +284,8 @@ async function fetchDoctors() {
         if (hospSel) hospSel.value = params.hospital;
     }
     applyFiltersAndPaginate();
+    if(loader) loader.classList.add('hidden');
+    if(list) list.classList.remove('hidden');
 }
 
 function getDoctorsForPage(doctors, page) {
@@ -449,6 +467,10 @@ function renderPagination(totalDoctors, page) {
 }
 
 function applyFiltersAndPaginate() {
+    const loader = document.getElementById('doctorsLoader');
+    const list = document.getElementById('doctorsList');
+    if(loader) loader.classList.add('hidden');
+    if(list) list.classList.remove('hidden');
     const specialtySel = document.getElementById('specialty');
     const hospitalSel = document.getElementById('hospital');
     const dateSel = document.getElementById('date');
