@@ -403,17 +403,15 @@
         });
         feather.replace();
         document.addEventListener('DOMContentLoaded', function() {
-                        // Active nav underline/bold
+                        // Active nav bottom border + blue text (no underline)
                         (function(){
                             const p = location.pathname;
                             const map = {'/':'home','/find-doctors':'doctors','/about':'about'};
                             const key = map[p] || (p.startsWith('/find-doctors') ? 'doctors' : (p.startsWith('/about') ? 'about' : 'home'));
                             document.querySelectorAll('a[data-nav]').forEach(a=>{
                                 if(a.getAttribute('data-nav')===key){
-                                    a.classList.add('text-blue-600','font-semibold');
-                                    a.style.textDecoration='underline';
-                                    a.style.textUnderlineOffset='4px';
-                                    a.style.borderBottomColor='#2563eb';
+                                    a.classList.add('text-blue-600','border-b-2','border-blue-600','font-semibold');
+                                    a.style.textDecoration = '';
                                 }
                             });
                         })();

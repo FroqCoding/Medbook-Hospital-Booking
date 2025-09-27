@@ -34,8 +34,6 @@
   font-weight: 600;
   color: #2563eb;
   border-bottom: 2.5px solid #2563eb;
-  text-underline-offset: 4px;
-  text-decoration: underline;
 }
     </style>
 </head>
@@ -200,8 +198,6 @@
                     document.querySelectorAll('a[data-nav]').forEach(a=>{
                         if(a.getAttribute('data-nav')===key){
                             a.classList.add('text-blue-600','font-semibold');
-                            a.style.textDecoration='underline';
-                            a.style.textUnderlineOffset='4px';
                             a.style.borderBottomColor='#2563eb';
                         }
                     });

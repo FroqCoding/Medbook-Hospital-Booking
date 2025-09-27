@@ -89,7 +89,7 @@
                 <section class="lg:col-span-8">
                     <div class="border-b border-gray-200">
                         <nav class="-mb-px flex space-x-8">
-                            <button data-tab="profile" class="tab-btn border-b-2 border-blue-500 text-blue-600 font-semibold whitespace-nowrap py-4 px-1 text-sm">Profile</button>
+                            <button data-tab="profile" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Profile</button>
                             <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Availability</button>
                             <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Appointments</button>
                             
@@ -305,23 +305,21 @@
             btns.forEach(b=>{
                 b.addEventListener('click',()=>{
                     btns.forEach(x=>{
-                        x.classList.remove('border-blue-500','text-blue-600','font-semibold');
+                        x.classList.remove('border-blue-500','border-b-2','text-blue-600','font-semibold');
                         x.classList.add('text-gray-500');
                         x.style.textDecoration='';
                     });
-                    b.classList.add('border-blue-500','text-blue-600','font-semibold');
+                    b.classList.add('border-b-2','border-blue-500','text-blue-600','font-semibold');
                     b.classList.remove('text-gray-500');
-                    b.style.textDecoration='underline';
-                    b.style.textUnderlineOffset='4px';
                     const tab = b.getAttribute('data-tab');
                     document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
                     const active = document.getElementById(`tab-${tab}`); if(active) active.classList.add('active');
                     feather.replace();
                 });
             });
-            // ensure initial active tab has underline
-            const activeBtn = document.querySelector('.tab-btn.border-blue-500');
-            if(activeBtn){ activeBtn.style.textDecoration='underline'; activeBtn.style.textUnderlineOffset='4px'; activeBtn.classList.add('font-semibold'); }
+            // ensure initial active tab has blue bottom border + blue text
+            const firstBtn = document.querySelector('.tab-btn');
+            if(firstBtn){ firstBtn.classList.add('border-b-2','border-blue-500','text-blue-600','font-semibold'); }
         }
 
         function renderAvailability(list, canEdit){
@@ -369,7 +367,7 @@
                 const dsorted = days.sort((a,b)=> daySort.indexOf(a)-daySort.indexOf(b));
                 return `<div class='flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm'>
                     <div class='truncate'><span class='font-medium'>${dsorted.join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
-                    <button type='button' class='text-red-600 hover:underline' data-range='${range}'>Remove</button>
+                    <button type='button' class='text-red-600 hover:text-red-800' data-range='${range}'>Remove</button>
                 </div>`;
             }).join('');
             // bind removals (delete all rows that match the range one by one)
