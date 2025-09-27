@@ -473,47 +473,52 @@ def register_doctor():
     missing = [k for k in required if not str(data.get(k,'' )).strip()]
     if missing:
         return json_error('Missing: '+', '.join(missing), 400)
+    try:
+        # Ensure hospital exists or create
+        hosp_name = data.get('hospital').strip()
+        hospital = Hospital.query.filter(Hospital.name.ilike(hosp_name)).first()
+        if not hospital:
+            hospital = Hospital(name=hosp_name)
+            db.session.add(hospital)
+            db.session.flush()
 
-    # Ensure hospital exists or create
-    hosp_name = data.get('hospital').strip()
-    hospital = Hospital.query.filter(Hospital.name.ilike(hosp_name)).first()
-    if not hospital:
-        hospital = Hospital(name=hosp_name)
-        db.session.add(hospital)
+        hashed = bcrypt.generate_password_hash(data['password']).decode('utf-8')
+        doctor = Doctor(
+            name=data['name'].strip(),
+            email=data['email'].strip(),
+            phone=data['phone'].strip(),
+            speciality=data['speciality'].strip(),
+            hospitalid=hospital.hospitalid,
+            gender=(data.get('gender') or None),
+            date_of_birth=datetime.strptime(data['date_of_birth'],'%Y-%m-%d').date() if data.get('date_of_birth') else None,
+            medical_license_number=(data.get('medical_license_number') or None),
+            years_of_experience=int(data['experience']) if str(data.get('experience','')).isdigit() else None,
+            professional_bio=(data.get('bio') or None),
+            password=hashed,
+            approval_status='pending'
+        )
+        db.session.add(doctor)
         db.session.flush()
 
-    hashed = bcrypt.generate_password_hash(data['password']).decode('utf-8')
-    doctor = Doctor(
-        name=data['name'].strip(),
-        email=data['email'].strip(),
-        phone=data['phone'].strip(),
-        speciality=data['speciality'].strip(),
-        hospitalid=hospital.hospitalid,
-        gender=(data.get('gender') or None),
-        date_of_birth=datetime.strptime(data['date_of_birth'],'%Y-%m-%d').date() if data.get('date_of_birth') else None,
-        medical_license_number=(data.get('medical_license_number') or None),
-        years_of_experience=int(data['experience']) if str(data.get('experience','')).isdigit() else None,
-        professional_bio=(data.get('bio') or None),
-        password=hashed,
-        approval_status='pending'
-    )
-    db.session.add(doctor)
-    db.session.flush()
-
-    # availability blocks
-    blocks = data.get('availability') or []
-    for b in blocks:
-        day = b.get('day'); start=b.get('start'); end=b.get('end')
-        if not day or not start or not end:
-            continue
-        try:
-            st = datetime.strptime(start,'%H:%M').time()
-            en = datetime.strptime(end,'%H:%M').time()
-        except Exception:
-            continue
-        db.session.add(DoctorAvailability(dayname=day, doctorid=doctor.doctorid, starttime=st, endtime=en))
-    db.session.commit()
-    return jsonify({'message':'Doctor submitted for approval','doctorid':doctor.doctorid}), 201
+        # availability blocks
+        blocks = data.get('availability') or []
+        for b in blocks:
+            day = b.get('day'); start=b.get('start'); end=b.get('end')
+            if not day or not start or not end:
+                continue
+            try:
+                st = datetime.strptime(start,'%H:%M').time()
+                en = datetime.strptime(end,'%H:%M').time()
+            except Exception:
+                continue
+            db.session.add(DoctorAvailability(dayname=day, doctorid=doctor.doctorid, starttime=st, endtime=en))
+        db.session.commit()
+        return jsonify({'message':'Doctor submitted for approval','doctorid':doctor.doctorid}), 201
+    except Exception as e:
+        db.session.rollback()
+        # Surface DB/backend error message to client for quicker diagnosis
+        err_msg = str(getattr(e, 'orig', e))
+        return json_error('Registration failed', 500, error=err_msg)
 
 # ----------------------
 # Doctor Login (must be approved)
