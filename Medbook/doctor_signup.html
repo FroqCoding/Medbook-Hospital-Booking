@@ -194,8 +194,12 @@
                             <input type="number" id="experience" min="0" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="hospital" class="block text-sm font-medium text-gray-700">Primary Hospital/Clinic</label>
-                            <input type="text" id="hospital" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="hospitalSelect" class="block text-sm font-medium text-gray-700">Primary Hospital/Clinic</label>
+                            <select id="hospitalSelect" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="">Select a hospital/clinic</option>
+                                <option value="__other__">Other (add new)</option>
+                            </select>
+                            <input type="text" id="hospitalNew" placeholder="Enter new hospital or clinic name" class="mt-2 hidden block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                         </div>
                         <div class="sm:col-span-2">
                             <label for="bio" class="block text-sm font-medium text-gray-700">Professional Bio</label>
@@ -490,7 +494,7 @@
                 medical_license_number: document.getElementById('medicalLicense').value.trim(),
                 speciality: document.getElementById('specialty').value,
                 experience: document.getElementById('experience').value,
-                hospital: document.getElementById('hospital').value.trim(),
+                // hospital gets set below: either hospitalid or hospital_new
                 bio: document.getElementById('bio').value.trim(),
                 password: document.getElementById('password').value
             };
@@ -504,9 +508,21 @@
                 hospital:'hospital/clinic',
                 password:'password'
             };
-            const requiredKeys = ['name','email','phone','speciality','hospital','password'];
+            const requiredKeys = ['name','email','phone','speciality','password'];
             const missing = requiredKeys.filter(k=>!payload[k]);
             if(missing.length){ toast('Missing: '+missing.map(k=>labels[k]||k).join(', ')); return; }
+            // hospital selection validation
+            const hospSel = document.getElementById('hospitalSelect');
+            const hospNewInput = document.getElementById('hospitalNew');
+            const selVal = hospSel.value;
+            if(!selVal){ toast('Please select your primary hospital/clinic'); return; }
+            if(selVal === '__other__'){
+                const newName = (hospNewInput.value || '').trim();
+                if(!newName){ toast('Enter a name for the new hospital/clinic'); return; }
+                payload.hospital_new = newName;
+            } else {
+                payload.hospitalid = selVal;
+            }
             if(payload.password && payload.password.length < 8){ toast('Password must be at least 8 characters'); return; }
             if(payload.password !== confirmPassword){ toast('Passwords do not match'); return; }
                         // If user forgot to click Add Availability but selected days + times, auto add one block
@@ -562,6 +578,33 @@
                 }
             } catch(err){ console.error(err); toast('Network error'); }
         });
+    </script>
+    <script>
+        // Load hospitals for dropdown and wire the Other toggle
+        (async function initHospitals(){
+            const sel = document.getElementById('hospitalSelect');
+            const other = document.getElementById('hospitalNew');
+            try {
+                const res = await fetch(`${window.location.origin}/hospitals`);
+                const list = await res.json();
+                // Insert items before the __other__ option
+                const otherOpt = Array.from(sel.options).find(o=>o.value==='__other__');
+                list.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.hospitalid;
+                    opt.textContent = h.name;
+                    sel.insertBefore(opt, otherOpt);
+                });
+            } catch(e) { /* ignore for now; keep dropdown minimal */ }
+            sel.addEventListener('change',()=>{
+                if(sel.value==='__other__'){
+                    other.classList.remove('hidden');
+                } else {
+                    other.classList.add('hidden');
+                    other.value='';
+                }
+            });
+        })();
     </script>
 </body>
 </html>
