@@ -168,8 +168,10 @@
         feather.replace();
 
         // Dynamic doctor profile population
+        // Prefer path-based ID: /doctor/{id}; fallback to ?doctorid= and then localStorage for logged-in doctor
+        const pathMatch = window.location.pathname.match(/\/doctor\/(\d+)/);
         const qs = new URLSearchParams(window.location.search);
-        let doctorId = qs.get('doctorid');
+        let doctorId = pathMatch ? pathMatch[1] : qs.get('doctorid');
         if(!doctorId && localStorage.getItem('doctorLoggedIn')==='true'){
             doctorId = localStorage.getItem('doctorId');
         }
