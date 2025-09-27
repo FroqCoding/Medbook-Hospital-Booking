@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 text-xl font-bold text-gray-900">MedBook</span></a>
+            <div class="hidden md:flex items-center space-x-6 text-sm">
+                <a href="doctors.html" class="text-gray-600 hover:text-gray-900">Doctors</a>
+                <a href="about.html" class="text-gray-600 hover:text-gray-900">About</a>
+                <button id="navDocLogout" class="text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-3 py-1">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div id="approvalBanner" class="hidden bg-yellow-50 border-y border-yellow-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-yellow-900 flex items-center">
+                <i data-feather="alert-triangle" class="h-4 w-4 mr-2"></i>
+                <span>Your account is pending approval. Editing is disabled until an admin approves your profile.</span>
+            </div>
+        </div>
+
+        <div class="bg-white shadow">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div class="flex items-center">
+                        <img class="h-16 w-16 rounded-full" src="https://i.pravatar.cc/128?img=5" alt="Doctor profile" />
+                        <div class="ml-4">
+                            <div class="flex items-center space-x-2">
+                                <h1 id="doctorName" class="text-2xl font-bold text-gray-900">Doctor</h1>
+                                <span id="approvalBadge" class="hidden badge bg-yellow-100 text-yellow-800">Pending</span>
+                            </div>
+                            <div class="flex items-center text-sm mt-1">
+                                <span id="doctorSpecialty" class="text-blue-600">—</span>
+                                <span id="reviewsSummary" class="ml-2 text-gray-500">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <button id="editProfileBtn" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            <i data-feather="edit-2" class="mr-2 h-4 w-4"></i>
+                            Edit Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div id="toast" class="hidden mb-4 px-4 py-3 rounded text-sm"></div>
+            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
+                <aside class="lg:col-span-4 mb-8 lg:mb-0">
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Profile Information</h2></div>
+                        <div class="px-6 py-4 space-y-3">
+                            <div class="flex items-center"><i data-feather="mail" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorEmail" class="text-sm text-gray-700">—</span></div>
+                            <div class="flex items-center"><i data-feather="phone" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorPhone" class="text-sm text-gray-700">—</span></div>
+                            <div class="flex items-center"><i data-feather="map-pin" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorHospital" class="text-sm text-gray-700">—</span></div>
+                            <div class="flex items-center"><i data-feather="briefcase" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorExperience" class="text-sm text-gray-700">—</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
+                        <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Quick Stats</h2></div>
+                        <div class="px-6 py-4 grid grid-cols-2 gap-4 text-center">
+                            <div><p id="statTotal" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Total Appointments</p></div>
+                            <div><p id="statAvgRating" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Average Rating</p></div>
+                            <div><p id="statShowRate" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Show Rate</p></div>
+                            <div><p id="statWait" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Avg Wait (min)</p></div>
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="lg:col-span-8">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8">
+                            <button data-tab="profile" class="tab-btn border-b-2 border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 text-sm font-medium">Profile</button>
+                            <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Availability</button>
+                            <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Appointments</button>
+                            <button data-tab="reviews" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Reviews</button>
+                        </nav>
+                    </div>
+
+                    <div class="mt-6">
+                        <div id="tab-profile" class="tab-content active">
+                            <div class="bg-white shadow rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-900">About</h2>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <p id="doctorBio" class="text-sm text-gray-700">—</p>
+                                </div>
+                            </div>
+
+                            <div id="editFormWrap" class="bg-white shadow rounded-lg overflow-hidden mt-6 hidden">
+                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Edit Profile</h2></div>
+                                <form id="editForm" class="px-6 py-4 grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input id="fEmail" type="email" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm" required />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                        <input id="fPhone" type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm" required />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Gender</label>
+                                        <select id="fGender" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                            <option value="">—</option>
+                                            <option>Male</option>
+                                            <option>Female</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Years of Experience</label>
+                                        <input id="fExp" type="number" min="0" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Professional Bio</label>
+                                        <textarea id="fBio" rows="4" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button id="saveEditBtn" type="submit" class="inline-flex items-center px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 text-sm">Save</button>
+                                        <button id="cancelEditBtn" type="button" class="px-4 py-2 rounded-md border text-sm">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="tab-availability" class="tab-content">
+                            <div class="bg-white shadow rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-900">Working Hours</h2>
+                                </div>
+                                <div id="availList" class="px-6 py-4 space-y-3"></div>
+                            </div>
+
+                            <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
+                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Add New Availability</h2></div>
+                                <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Day</label>
+                                        <select id="daySel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                                            <option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Start</label>
+                                        <select id="startSel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">End</label>
+                                        <select id="endSel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <button id="addAvailBtn" class="inline-flex items-center px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 text-sm">
+                                            <i data-feather="plus" class="h-4 w-4 mr-2"></i> Add Block
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-appointments" class="tab-content">
+                            <div class="bg-white shadow rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Recent Appointments</h2></div>
+                                <div id="apptsList" class="px-6 py-4 divide-y divide-gray-100"></div>
+                            </div>
+                        </div>
+
+                        <div id="tab-reviews" class="tab-content">
+                            <div class="bg-white shadow rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Latest Reviews</h2></div>
+                                <div id="reviewsList" class="px-6 py-4 divide-y divide-gray-100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-center py-6 text-gray-400 text-xs">&copy; 2025 MedBook.</footer>
+
+    <script>
+        feather.replace();
+        const $ = (sel) => document.querySelector(sel);
+        const tokenKey = 'doctorAccessToken';
+        const pendingClass = 'bg-yellow-100 text-yellow-800';
+        const errorClass = 'bg-red-50 text-red-800 border border-red-200';
+        const successClass = 'bg-green-50 text-green-800 border border-green-200';
+
+        function showToast(msg, type='info'){
+            const el = $('#toast');
+            el.textContent = msg;
+            el.className = '';
+            el.classList.add('mb-4','px-4','py-3','rounded','text-sm');
+            if(type==='error') el.classList.add(...errorClass.split(' '));
+            else if(type==='success') el.classList.add(...successClass.split(' '));
+            else el.classList.add('bg-gray-100','text-gray-800','border','border-gray-200');
+            el.classList.remove('hidden');
+            setTimeout(()=>{ el.classList.add('hidden'); }, 3500);
+        }
+
+        function authHeader(){
+            const t = localStorage.getItem(tokenKey);
+            return { 'Authorization': 'Bearer ' + t };
+        }
+
+        function requireAuth(){
+            const t = localStorage.getItem(tokenKey);
+            if(!t){ window.location.href='doctor_login.html'; }
+            return !!t;
+        }
+
+        async function apiGet(path){
+            const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
+            if(r.status===401){ window.location.href='doctor_login.html'; return null; }
+            return r.json();
+        }
+        async function apiJson(method, path, body){
+            const r = await fetch(`${window.location.origin}${path}`, {
+                method,
+                headers: { 'Content-Type': 'application/json', ...authHeader() },
+                body: JSON.stringify(body||{})
+            });
+            if(r.status===401){ window.location.href='doctor_login.html'; return null; }
+            const data = await r.json().catch(()=>({}));
+            if(!r.ok){ throw new Error(data.message || 'Request failed'); }
+            return data;
+        }
+
+        function renderStars(avg) {
+            if(avg==null) return 'No ratings';
+            const filled = Math.round(avg);
+            let html = '';
+            for(let i=1;i<=5;i++){
+                html += `<i data-feather="star" class="h-4 w-4 ${i<=filled ? 'text-yellow-400 fill-yellow-400' : ''}"></i>`;
+            }
+            return html + `<span class="ml-1 text-xs text-gray-500">(${avg.toFixed(1)})</span>`;
+        }
+
+        function fmtTime24To12(hhmm){
+            const [h,m] = hhmm.split(':').map(Number);
+            const am = h<12; const h12=((h%12)||12);
+            return `${h12}:${(m+'').padStart(2,'0')} ${am?'AM':'PM'}`;
+        }
+
+        function populateTimeSelects(){
+            const startSel = $('#startSel');
+            const endSel = $('#endSel');
+            if(!startSel || !endSel) return;
+            const times = [];
+            for(let h=8; h<=20; h++){
+                for(let m of [0,30]){
+                    const hh = String(h).padStart(2,'0');
+                    const mm = String(m).padStart(2,'0');
+                    times.push(`${hh}:${mm}`);
+                }
+            }
+            startSel.innerHTML = times.slice(0,-1).map(t=>`<option value="${t}">${t}</option>`).join('');
+            endSel.innerHTML = times.slice(1).map(t=>`<option value="${t}">${t}</option>`).join('');
+        }
+
+        function setApprovalUI(status){
+            const banner = $('#approvalBanner');
+            const badge = $('#approvalBadge');
+            const editBtn = $('#editProfileBtn');
+            const addBtn = $('#addAvailBtn');
+            const isApproved = (status==='approved');
+            if(!isApproved){
+                banner.classList.remove('hidden');
+                badge.classList.remove('hidden');
+                badge.textContent = status.charAt(0).toUpperCase()+status.slice(1);
+                editBtn.setAttribute('disabled','true');
+                if(addBtn) addBtn.setAttribute('disabled','true');
+            } else {
+                banner.classList.add('hidden');
+                badge.classList.add('hidden');
+                editBtn.removeAttribute('disabled');
+                if(addBtn) addBtn.removeAttribute('disabled');
+            }
+        }
+
+        function wireTabs(){
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(b=>{
+                b.addEventListener('click',()=>{
+                    btns.forEach(x=>x.classList.remove('border-blue-500','text-blue-600'));
+                    b.classList.add('border-blue-500','text-blue-600');
+                    const tab = b.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+                    const active = document.getElementById(`tab-${tab}`); if(active) active.classList.add('active');
+                    feather.replace();
+                });
+            });
+        }
+
+        function renderAvailability(list, canEdit){
+            const wrap = $('#availList');
+            if(!wrap) return;
+            if(!list || list.length===0){ wrap.innerHTML = '<p class="text-sm text-gray-500">No availability set.</p>'; return; }
+            const dayOrder = {Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7};
+            list.sort((a,b)=> (dayOrder[a.dayname]||99)-(dayOrder[b.dayname]||99) || a.starttime.localeCompare(b.starttime));
+            wrap.innerHTML = list.map(it=>{
+                const label = `${it.dayname} ${fmtTime24To12(it.starttime)} - ${fmtTime24To12(it.endtime)}`;
+                const del = canEdit ? `<button class="text-red-600 hover:text-red-800" data-del="${it.dayid}"><i data-feather="trash-2" class="h-4 w-4"></i></button>` : '';
+                return `<div class="flex justify-between items-center p-3 rounded-md border border-gray-200">`+
+                             `<div class="text-sm text-gray-800">${label}</div>${del?`<div>${del}</div>`:''}</div>`;
+            }).join('');
+            // bind deletes
+            if(canEdit){
+                wrap.querySelectorAll('button[data-del]').forEach(btn=>{
+                    btn.addEventListener('click', async ()=>{
+                        const id = btn.getAttribute('data-del');
+                        try{
+                            await apiJson('DELETE','/api/doctor/me/availability',{ dayid: Number(id) });
+                            showToast('Availability removed','success');
+                            await loadAvailability();
+                        }catch(e){ showToast(String(e.message||e),'error'); }
+                    });
+                });
+            }
+            feather.replace();
+        }
+
+        async function loadProfile(){
+            const data = await apiGet('/api/doctor/me');
+            if(!data) return;
+            const d = data.doctor;
+            $('#doctorName').textContent = d.name || 'Doctor';
+            $('#doctorSpecialty').textContent = d.speciality || '—';
+            $('#doctorEmail').textContent = d.email || '—';
+            $('#doctorPhone').textContent = d.phone || '—';
+            $('#doctorHospital').textContent = (d.hospital&&d.hospital.name) || '—';
+            $('#doctorExperience').textContent = d.years_of_experience!=null ? `${d.years_of_experience} years experience` : '—';
+            $('#doctorBio').textContent = d.professional_bio || '—';
+            setApprovalUI(d.approval_status);
+            // seed edit form
+            $('#fEmail').value = d.email || '';
+            $('#fPhone').value = d.phone || '';
+            $('#fGender').value = d.gender || '';
+            $('#fExp').value = d.years_of_experience!=null ? d.years_of_experience : '';
+            $('#fBio').value = d.professional_bio || '';
+            feather.replace();
+        }
+
+        async function loadStats(){
+            const s = await apiGet('/api/doctor/me/stats');
+            if(!s) return;
+            $('#statTotal').textContent = s.totalAppointments ?? '—';
+            $('#statAvgRating').textContent = s.avgRating!=null ? s.avgRating.toFixed(1) : '—';
+            $('#statShowRate').textContent = s.showRate!=null ? Math.round(s.showRate*100)+'%' : '—';
+            $('#statWait').textContent = s.avgWaitMins!=null ? s.avgWaitMins : '—';
+            // header summary
+            const starsHtml = renderStars(s.avgRating);
+            $('#reviewsSummary').innerHTML = starsHtml;
+            feather.replace();
+        }
+
+        async function loadAvailability(){
+            const rows = await apiGet('/api/doctor/me/availability');
+            if(rows==null) return;
+            // can edit iff approved
+            const me = await apiGet('/api/doctor/me');
+            const approved = me && me.doctor && me.doctor.approval_status==='approved';
+            renderAvailability(rows, approved);
+        }
+
+        async function loadAppointments(){
+            const rows = await apiGet('/api/doctor/me/appointments?limit=20');
+            if(rows==null) return;
+            const wrap = $('#apptsList');
+            if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-500">No appointments.</p>'; return; }
+            wrap.innerHTML = rows.map(r=>{
+                return `<div class="py-3 flex items-center justify-between">
+                    <div class="text-sm text-gray-800"><span class="font-medium">${r.appointment_date}</span> at ${r.appointment_time}</div>
+                    <div class="text-xs text-gray-500 truncate max-w-[60%]">${r.reason||''}</div>
+                    <span class="ml-2 text-xs ${r.status?'text-green-700':'text-red-700'}">${r.status?'Scheduled':'Cancelled'}</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function loadReviews(){
+            const rows = await apiGet('/api/doctor/me/reviews?limit=20');
+            if(rows==null) return;
+            const wrap = $('#reviewsList');
+            if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-500">No reviews yet.</p>'; return; }
+            wrap.innerHTML = rows.map(r=>{
+                const stars = renderStars(r.rating||0);
+                const who = r.user_name ? `by ${r.user_name}` : '';
+                return `<div class="py-3">
+                    <div class="flex items-center text-sm">${stars}</div>
+                    <div class="text-xs text-gray-500">${new Date(r.created_at).toLocaleString()} ${who}</div>
+                    <div class="text-sm text-gray-800 mt-1">${r.comments||''}</div>
+                </div>`;
+            }).join('');
+            feather.replace();
+        }
+
+        function wireEdit(){
+            const btn = $('#editProfileBtn');
+            const wrap = $('#editFormWrap');
+            const cancel = $('#cancelEditBtn');
+            btn.addEventListener('click',()=>{ wrap.classList.toggle('hidden'); });
+            cancel.addEventListener('click',()=>{ wrap.classList.add('hidden'); });
+            $('#editForm').addEventListener('submit', async (e)=>{
+                e.preventDefault();
+                try{
+                    const payload = {
+                        email: $('#fEmail').value.trim(),
+                        phone: $('#fPhone').value.trim(),
+                        gender: $('#fGender').value || null,
+                        years_of_experience: $('#fExp').value ? Number($('#fExp').value) : null,
+                        professional_bio: $('#fBio').value.trim() || null
+                    };
+                    await apiJson('PATCH','/api/doctor/me', payload);
+                    showToast('Profile updated','success');
+                    wrap.classList.add('hidden');
+                    await loadProfile();
+                }catch(e){ showToast(String(e.message||e),'error'); }
+            });
+        }
+
+        function wireAvailabilityAdd(){
+            const add = $('#addAvailBtn');
+            if(!add) return;
+            add.addEventListener('click', async ()=>{
+                try{
+                    const body = {
+                        dayname: $('#daySel').value,
+                        starttime: $('#startSel').value,
+                        endtime: $('#endSel').value
+                    };
+                    await apiJson('POST','/api/doctor/me/availability', body);
+                    showToast('Availability added','success');
+                    await loadAvailability();
+                }catch(e){ showToast(String(e.message||e),'error'); }
+            });
+        }
+
+        function wireLogout(){
+            const btn = $('#navDocLogout');
+            if(!btn) return;
+            btn.addEventListener('click', ()=>{
+                localStorage.removeItem(tokenKey);
+                localStorage.removeItem('doctorLoggedIn');
+                localStorage.removeItem('doctorId');
+                localStorage.removeItem('doctorName');
+                window.location.href = 'doctor_login.html';
+            });
+        }
+
+        (async function init(){
+            if(!requireAuth()) return;
+            wireTabs();
+            wireEdit();
+            wireAvailabilityAdd();
+            wireLogout();
+            populateTimeSelects();
+            await Promise.all([loadProfile(), loadStats()]);
+            await loadAvailability();
+            await loadAppointments();
+            await loadReviews();
+            feather.replace();
+        })();
+    </script>
+</body>
+</html>

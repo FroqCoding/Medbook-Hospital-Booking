@@ -100,10 +100,11 @@
         localStorage.setItem('doctorLoggedIn','true');
         localStorage.setItem('doctorId', j.doctorid);
         localStorage.setItem('doctorName', j.name || 'Doctor');
+        if(j.access_token){ localStorage.setItem('doctorAccessToken', j.access_token); }
         // Clear user session if any to avoid ambiguity
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('userId');
-        window.location.href = `doc-profile.html?doctorid=${j.doctorid}`;
+        window.location.href = '/doctor/profile';
       }catch(ex){ 
         err.textContent='Network error'; 
         err.classList.remove('hidden'); 
