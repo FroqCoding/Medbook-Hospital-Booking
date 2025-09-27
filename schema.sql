@@ -36,6 +36,7 @@ CREATE TABLE doctors (
   hospitalid INTEGER NOT NULL REFERENCES hospitals(hospitalid) ON DELETE CASCADE,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
+  password TEXT,
   -- Approval workflow
   approval_status TEXT NOT NULL DEFAULT 'pending', -- pending|approved|rejected|suspended
   approved_at TIMESTAMP NULL,

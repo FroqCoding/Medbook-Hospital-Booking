@@ -948,6 +948,16 @@ def debug_users_schema():
             cols.append({'name': c['name'], 'type': str(c['type'])})
     return jsonify({'columns': cols})
 
+# Debug endpoint to show doctors schema
+@app.route('/debug/doctors/schema')
+def debug_doctors_schema():
+    insp = inspect(db.engine)
+    cols = []
+    if 'doctors' in insp.get_table_names():
+        for c in insp.get_columns('doctors'):
+            cols.append({'name': c['name'], 'type': str(c['type'])})
+    return jsonify({'columns': cols})
+
 # ----------------------
 # Simple static file serving (serve HTML from this package directory rather than CWD)
 # Prevents breakage after removing legacy root-level duplicates.
