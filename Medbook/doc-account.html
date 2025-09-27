@@ -12,6 +12,8 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 9999px; }
+        .day-btn { transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+        .day-btn.active-day { background:#2563eb !important; color:#fff !important; border-color:#2563eb !important; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -87,9 +89,9 @@
                 <section class="lg:col-span-8">
                     <div class="border-b border-gray-200">
                         <nav class="-mb-px flex space-x-8">
-                            <button data-tab="profile" class="tab-btn border-b-2 border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 text-sm font-medium">Profile</button>
-                            <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Availability</button>
-                            <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Appointments</button>
+                            <button data-tab="profile" class="tab-btn border-b-2 border-blue-500 text-blue-600 font-semibold whitespace-nowrap py-4 px-1 text-sm">Profile</button>
+                            <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Availability</button>
+                            <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Appointments</button>
                             
                         </nav>
                     </div>
@@ -151,25 +153,37 @@
 
                             <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
                                 <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Add New Availability</h2></div>
-                                <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <div class="px-6 py-4 space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Day</label>
-                                        <select id="daySel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-                                            <option>Mon</option><option>Tue</option><option>Wed</option><option>Thu</option><option>Fri</option><option>Sat</option><option>Sun</option>
-                                        </select>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Working Days</label>
+                                        <div class="flex flex-wrap gap-2" id="dayButtons">
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Mon">Mon</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Tue">Tue</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Wed">Wed</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Thu">Thu</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Fri">Fri</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Sat">Sat</button>
+                                            <button type="button" class="day-btn px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" data-day="Sun">Sun</button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Start Hour (24h)</label>
+                                            <select id="startHour" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">End Hour (24h)</label>
+                                            <select id="endHour" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Start</label>
-                                        <select id="startSel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">End</label>
-                                        <select id="endSel" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></select>
-                                    </div>
-                                    <div class="md:col-span-3">
                                         <button id="addAvailBtn" class="inline-flex items-center px-4 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700 text-sm">
-                                            <i data-feather="plus" class="h-4 w-4 mr-2"></i> Add Block
+                                            <i data-feather="plus" class="h-4 w-4 mr-2"></i> Add Availability
                                         </button>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-medium text-gray-900 mb-2">Your Availability</h3>
+                                        <div id="availGrouped" class="space-y-3"></div>
                                     </div>
                                 </div>
                             </div>
@@ -255,20 +269,15 @@
             return `${h12}:${(m+'').padStart(2,'0')} ${am?'AM':'PM'}`;
         }
 
-        function populateTimeSelects(){
-            const startSel = $('#startSel');
-            const endSel = $('#endSel');
-            if(!startSel || !endSel) return;
-            const times = [];
-            for(let h=8; h<=20; h++){
-                for(let m of [0,30]){
-                    const hh = String(h).padStart(2,'0');
-                    const mm = String(m).padStart(2,'0');
-                    times.push(`${hh}:${mm}`);
-                }
-            }
-            startSel.innerHTML = times.slice(0,-1).map(t=>`<option value="${t}">${t}</option>`).join('');
-            endSel.innerHTML = times.slice(1).map(t=>`<option value="${t}">${t}</option>`).join('');
+        function populateHourSelects(){
+            const sh = $('#startHour');
+            const eh = $('#endHour');
+            if(!sh || !eh) return;
+            const opts = Array.from({length:13}, (_,i)=> 8+i) // 8..20
+                .map(h=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}:00</option>`).join('');
+            sh.innerHTML = '<option value="08">08:00</option>'+opts;
+            eh.innerHTML = opts;
+            sh.value='09'; eh.value='17';
         }
 
         function setApprovalUI(status){
@@ -295,14 +304,24 @@
             const btns = document.querySelectorAll('.tab-btn');
             btns.forEach(b=>{
                 b.addEventListener('click',()=>{
-                    btns.forEach(x=>x.classList.remove('border-blue-500','text-blue-600'));
-                    b.classList.add('border-blue-500','text-blue-600');
+                    btns.forEach(x=>{
+                        x.classList.remove('border-blue-500','text-blue-600','font-semibold');
+                        x.classList.add('text-gray-500');
+                        x.style.textDecoration='';
+                    });
+                    b.classList.add('border-blue-500','text-blue-600','font-semibold');
+                    b.classList.remove('text-gray-500');
+                    b.style.textDecoration='underline';
+                    b.style.textUnderlineOffset='4px';
                     const tab = b.getAttribute('data-tab');
                     document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
                     const active = document.getElementById(`tab-${tab}`); if(active) active.classList.add('active');
                     feather.replace();
                 });
             });
+            // ensure initial active tab has underline
+            const activeBtn = document.querySelector('.tab-btn.border-blue-500');
+            if(activeBtn){ activeBtn.style.textDecoration='underline'; activeBtn.style.textUnderlineOffset='4px'; activeBtn.classList.add('font-semibold'); }
         }
 
         function renderAvailability(list, canEdit){
@@ -331,6 +350,43 @@
                 });
             }
             feather.replace();
+        }
+
+        // Grouped renderer (like signup) for added blocks
+        function renderAvailabilityGrouped(rows){
+            const container = $('#availGrouped');
+            if(!container) return;
+            if(!rows || !rows.length){ container.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
+            // group by time range
+            const grouped = {};
+            rows.forEach(r=>{
+                const key = `${r.starttime}-${r.endtime}`;
+                (grouped[key] = grouped[key] || []).push(r.dayname);
+            });
+            const daySort = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            container.innerHTML = Object.entries(grouped).map(([range, days])=>{
+                const [st,en] = range.split('-');
+                const dsorted = days.sort((a,b)=> daySort.indexOf(a)-daySort.indexOf(b));
+                return `<div class='flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm'>
+                    <div class='truncate'><span class='font-medium'>${dsorted.join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
+                    <button type='button' class='text-red-600 hover:underline' data-range='${range}'>Remove</button>
+                </div>`;
+            }).join('');
+            // bind removals (delete all rows that match the range one by one)
+            container.querySelectorAll('button[data-range]').forEach(btn=>{
+                btn.addEventListener('click', async ()=>{
+                    const [st,en] = btn.getAttribute('data-range').split('-');
+                    // fetch latest rows and delete matching ones
+                    const rows = await apiGet('/api/doctor/me/availability');
+                    if(!rows) return;
+                    const matches = rows.filter(r=> r.starttime===st && r.endtime===en);
+                    for(const r of matches){
+                        try{ await apiJson('DELETE','/api/doctor/me/availability',{ dayid: r.dayid }); }catch(e){ /* continue */ }
+                    }
+                    showToast('Availability removed','success');
+                    await loadAvailability();
+                });
+            });
         }
 
         async function loadProfile(){
@@ -372,6 +428,7 @@
             const me = await apiGet('/api/doctor/me');
             const approved = me && me.doctor && me.doctor.approval_status==='approved';
             renderAvailability(rows, approved);
+            renderAvailabilityGrouped(rows);
         }
 
         async function loadAppointments(){
@@ -413,17 +470,42 @@
         }
 
         function wireAvailabilityAdd(){
+            // toggle day buttons
+            const dayWrap = document.getElementById('dayButtons');
+            if(dayWrap){
+                dayWrap.querySelectorAll('.day-btn').forEach(btn=>{
+                    btn.addEventListener('click',()=>{
+                        const active = !btn.classList.contains('active-day');
+                        // single-day toggle (prevent duplicates across added rows): just toggle class
+                        btn.classList.toggle('active-day', active);
+                    });
+                });
+            }
             const add = $('#addAvailBtn');
             if(!add) return;
             add.addEventListener('click', async ()=>{
                 try{
-                    const body = {
-                        dayname: $('#daySel').value,
-                        starttime: $('#startSel').value,
-                        endtime: $('#endSel').value
-                    };
-                    await apiJson('POST','/api/doctor/me/availability', body);
+                    const sh = $('#startHour').value;
+                    const eh = $('#endHour').value;
+                    if(!sh || !eh){ showToast('Select start and end hours','error'); return; }
+                    const start = `${sh}:00`;
+                    const end = `${eh}:00`;
+                    if(start >= end){ showToast('End hour must be after start','error'); return; }
+                    // backend accepts only within 08:00-20:00 and no overlaps
+                    const days = Array.from(document.querySelectorAll('#dayButtons .day-btn.active-day')).map(b=>b.getAttribute('data-day'));
+                    if(!days.length){ showToast('Select at least one day','error'); return; }
+                    // Prevent adding a day that already exists (regardless of time) like signup behavior
+                    const existing = await apiGet('/api/doctor/me/availability');
+                    const existingDays = new Set((existing||[]).map(r=> r.dayname));
+                    const conflict = days.some(d=> existingDays.has(d));
+                    if(conflict){ showToast('One or more selected days already added','error'); return; }
+                    // Create for each day
+                    for(const d of days){
+                        await apiJson('POST','/api/doctor/me/availability',{ dayname: d, starttime: start, endtime: end });
+                    }
                     showToast('Availability added','success');
+                    // Clear day selections
+                    document.querySelectorAll('#dayButtons .day-btn.active-day').forEach(b=>b.classList.remove('active-day'));
                     await loadAvailability();
                 }catch(e){ showToast(String(e.message||e),'error'); }
             });
@@ -447,7 +529,7 @@
             wireEdit();
             wireAvailabilityAdd();
             wireLogout();
-            populateTimeSelects();
+            populateHourSelects();
             await Promise.all([loadProfile(), loadStats()]);
             await loadAvailability();
             await loadAppointments();
