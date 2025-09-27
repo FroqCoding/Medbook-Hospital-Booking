@@ -532,7 +532,8 @@
                 }
                 if(!res.ok){
                     const msg = (json && json.message) ? json.message : `Registration failed (HTTP ${res.status})`;
-                    toast(msg);
+                    const detail = (json && json.error) ? `: ${json.error}` : '';
+                    toast(msg + detail);
                     return;
                 }
                 // Show success modal instead of redirecting
