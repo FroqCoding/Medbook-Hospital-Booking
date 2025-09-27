@@ -223,9 +223,17 @@
         }
 
         async function apiGet(path){
-            const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
-            if(r.status===401){ window.location.href='/doctor/login'; return null; }
-            return r.json();
+            try{
+                const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
+                if(r.status===401){ window.location.href='/doctor/login'; return null; }
+                if(r.status===403){ showToast('Access denied','error'); return null; }
+                if(r.status===422){ // token/claims issues
+                    localStorage.removeItem(tokenKey);
+                    window.location.href='/doctor/login';
+                    return null;
+                }
+                return await r.json();
+            }catch(e){ showToast('Network error','error'); return null; }
         }
         async function apiJson(method, path, body){
             const r = await fetch(`${window.location.origin}${path}`, {
@@ -234,6 +242,8 @@
                 body: JSON.stringify(body||{})
             });
             if(r.status===401){ window.location.href='/doctor/login'; return null; }
+            if(r.status===403){ throw new Error('Access denied'); }
+            if(r.status===422){ localStorage.removeItem(tokenKey); window.location.href='/doctor/login'; return null; }
             const data = await r.json().catch(()=>({}));
             if(!r.ok){ throw new Error(data.message || 'Request failed'); }
             return data;
@@ -326,7 +336,7 @@
         async function loadProfile(){
             const data = await apiGet('/api/doctor/me');
             if(!data) return;
-            const d = data.doctor;
+            const d = (data && data.doctor) ? data.doctor : {};
             $('#doctorName').textContent = d.name || 'Doctor';
             $('#doctorSpecialty').textContent = d.speciality || '—';
             $('#doctorEmail').textContent = d.email || '—';
@@ -334,13 +344,13 @@
             $('#doctorHospital').textContent = (d.hospital&&d.hospital.name) || '—';
             $('#doctorExperience').textContent = d.years_of_experience!=null ? `${d.years_of_experience} years experience` : '—';
             $('#doctorBio').textContent = d.professional_bio || '—';
-            setApprovalUI(d.approval_status);
+            if(d.approval_status) setApprovalUI(d.approval_status);
             // seed edit form
-            $('#fEmail').value = d.email || '';
-            $('#fPhone').value = d.phone || '';
-            $('#fGender').value = d.gender || '';
-            $('#fExp').value = d.years_of_experience!=null ? d.years_of_experience : '';
-            $('#fBio').value = d.professional_bio || '';
+            if($('#fEmail')) $('#fEmail').value = d.email || '';
+            if($('#fPhone')) $('#fPhone').value = d.phone || '';
+            if($('#fGender')) $('#fGender').value = d.gender || '';
+            if($('#fExp')) $('#fExp').value = d.years_of_experience!=null ? d.years_of_experience : '';
+            if($('#fBio')) $('#fBio').value = d.professional_bio || '';
             feather.replace();
         }
 

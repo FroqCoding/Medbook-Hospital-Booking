@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_cors import CORS
 from datetime import datetime, date
 import os
@@ -653,7 +653,8 @@ def doctor_login():
     if doctor.approval_status != 'approved':
         return json_error('Doctor not approved', 403)
     # Issue a JWT for doctor identity
-    token = create_access_token(identity={'role': 'doctor', 'doctorid': doctor.doctorid})
+    # Use string identity to avoid 422 errors like "Subject must be a string" in some environments
+    token = create_access_token(identity=str(doctor.doctorid), additional_claims={'role': 'doctor'})
     return jsonify({'doctorid': doctor.doctorid, 'name': doctor.name, 'access_token': token})
 
 # ----------------------
@@ -661,10 +662,20 @@ def doctor_login():
 # ----------------------
 def _require_doctor_identity():
     ident = get_jwt_identity()
-    # Accept both legacy int (not expected for doctors) and new dict identities
+    claims = get_jwt()
+    # Accept both formats:
+    # - New: identity is doctorid (string/int) and claim role=='doctor'
+    # - Legacy: identity is dict {role:'doctor', doctorid:<id>}
+    try:
+        if claims and claims.get('role') == 'doctor':
+            # New format: identity is doctorid
+            if isinstance(ident, (str, int)):
+                return int(ident)
+    except Exception:
+        pass
     if isinstance(ident, dict) and ident.get('role') == 'doctor' and ident.get('doctorid'):
         return int(ident['doctorid'])
-    # If identity is an int, it's likely a user token; reject access
+    # Otherwise, not a doctor token
     raise PermissionError('doctor token required')
 
 # ----------------------
