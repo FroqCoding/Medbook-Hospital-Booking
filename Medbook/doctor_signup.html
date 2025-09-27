@@ -136,6 +136,15 @@
                             <input type="tel" id="phone" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <input type="password" id="password" minlength="8" autocomplete="new-password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="At least 8 characters">
+                            <p class="mt-1 text-[11px] text-gray-400">Use 8+ characters. Keep it secure.</p>
+                        </div>
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                            <input type="password" id="confirmPassword" autocomplete="new-password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Re-enter password">
+                        </div>
+                        <div>
                             <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
                             <select id="gender" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option>Select Gender</option>
@@ -483,8 +492,9 @@
                 experience: document.getElementById('experience').value,
                 hospital: document.getElementById('hospital').value.trim(),
                 bio: document.getElementById('bio').value.trim(),
-                password: (document.getElementById('email').value.split('@')[0] + '123').slice(0,32) // TEMP: simple default or could add password fields
+                password: document.getElementById('password').value
             };
+            const confirmPassword = document.getElementById('confirmPassword').value;
             // Basic validation with friendlier labels
             const labels = {
                 name:'name',
@@ -497,6 +507,8 @@
             const requiredKeys = ['name','email','phone','speciality','hospital','password'];
             const missing = requiredKeys.filter(k=>!payload[k]);
             if(missing.length){ toast('Missing: '+missing.map(k=>labels[k]||k).join(', ')); return; }
+            if(payload.password && payload.password.length < 8){ toast('Password must be at least 8 characters'); return; }
+            if(payload.password !== confirmPassword){ toast('Passwords do not match'); return; }
                         // If user forgot to click Add Availability but selected days + times, auto add one block
                         if(!availabilityBlocks.length){
                                 const sh = document.getElementById('startHour').value;
