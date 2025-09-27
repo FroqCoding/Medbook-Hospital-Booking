@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from datetime import datetime, date
 import os
@@ -652,7 +652,265 @@ def doctor_login():
         return json_error('Invalid credentials', 401)
     if doctor.approval_status != 'approved':
         return json_error('Doctor not approved', 403)
-    return jsonify({'doctorid': doctor.doctorid, 'name': doctor.name})
+    # Issue a JWT for doctor identity
+    token = create_access_token(identity={'role': 'doctor', 'doctorid': doctor.doctorid})
+    return jsonify({'doctorid': doctor.doctorid, 'name': doctor.name, 'access_token': token})
+
+# ----------------------
+# Helpers for doctor auth
+# ----------------------
+def _require_doctor_identity():
+    ident = get_jwt_identity()
+    # Accept both legacy int (not expected for doctors) and new dict identities
+    if isinstance(ident, dict) and ident.get('role') == 'doctor' and ident.get('doctorid'):
+        return int(ident['doctorid'])
+    # If identity is an int, it's likely a user token; reject access
+    raise PermissionError('doctor token required')
+
+# ----------------------
+# Doctor self APIs (must use doctor JWT)
+# ----------------------
+@app.route('/api/doctor/me', methods=['GET', 'PATCH'])
+@jwt_required()
+def api_doctor_me():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    doc = (
+        db.session.query(Doctor, Hospital)
+        .join(Hospital, Doctor.hospitalid == Hospital.hospitalid)
+        .filter(Doctor.doctorid == doctor_id)
+        .first()
+    )
+    if not doc:
+        return json_error('Doctor not found', 404)
+    doctor, hospital = doc
+    if request.method == 'GET':
+        payload = {
+            'doctor': {
+                'doctorid': doctor.doctorid,
+                'name': doctor.name,
+                'speciality': doctor.speciality,
+                'email': doctor.email,
+                'phone': doctor.phone,
+                'gender': doctor.gender,
+                'date_of_birth': doctor.date_of_birth.strftime('%Y-%m-%d') if doctor.date_of_birth else None,
+                'medical_license_number': doctor.medical_license_number,
+                'years_of_experience': doctor.years_of_experience,
+                'professional_bio': doctor.professional_bio,
+                'approval_status': doctor.approval_status,
+                'hospital': {
+                    'hospitalid': hospital.hospitalid,
+                    'name': hospital.name,
+                    'address': hospital.address,
+                    'phone': hospital.phone,
+                    'email': hospital.email,
+                }
+            }
+        }
+        return jsonify(payload)
+    # PATCH: update limited fields
+    data = request.get_json() or {}
+    allowed = {'phone', 'email', 'gender', 'professional_bio', 'years_of_experience'}
+    updates = {k: v for k, v in data.items() if k in allowed}
+    # Simple validation
+    if 'years_of_experience' in updates:
+        try:
+            updates['years_of_experience'] = int(updates['years_of_experience']) if updates['years_of_experience'] is not None else None
+        except Exception:
+            return json_error('years_of_experience must be an integer', 400)
+    for k, v in updates.items():
+        setattr(doctor, k, v)
+    db.session.commit()
+    return jsonify({'message': 'updated'})
+
+@app.route('/api/doctor/me/availability', methods=['GET'])
+@jwt_required()
+def api_doctor_availability_get():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    rows = DoctorAvailability.query.filter_by(doctorid=doctor_id).all()
+    day_order = {'Mon':1,'Tue':2,'Wed':3,'Thu':4,'Fri':5,'Sat':6,'Sun':7}
+    def _fmt(t):
+        return t.strftime('%H:%M') if t else None
+    items = [{'dayid': r.dayid, 'dayname': r.dayname, 'starttime': _fmt(r.starttime), 'endtime': _fmt(r.endtime)} for r in rows]
+    items.sort(key=lambda x: (day_order.get(x['dayname'], 99), x['starttime']))
+    return jsonify(items)
+
+@app.route('/api/doctor/me/availability', methods=['POST'])
+@jwt_required()
+def api_doctor_availability_post():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    data = request.get_json() or {}
+    day = (data.get('dayname') or '').strip()
+    st = (data.get('starttime') or '').strip()
+    en = (data.get('endtime') or '').strip()
+    valid_days = {'Mon','Tue','Wed','Thu','Fri','Sat','Sun'}
+    if day not in valid_days:
+        return json_error('Invalid dayname', 400)
+    # Normalize
+    try:
+        start = datetime.strptime(st, '%H:%M').time()
+        end = datetime.strptime(en, '%H:%M').time()
+    except Exception:
+        return json_error('Invalid time format, expected HH:MM', 400)
+    if not (start < end):
+        return json_error('starttime must be earlier than endtime', 400)
+    # Clamp to clinic hours 08:00-20:00
+    cstart = datetime.strptime('08:00','%H:%M').time()
+    cend = datetime.strptime('20:00','%H:%M').time()
+    if start < cstart or end > cend:
+        return json_error('Time must be within clinic hours (08:00-20:00)', 400)
+    # Overlap check
+    existing = DoctorAvailability.query.filter_by(doctorid=doctor_id, dayname=day).all()
+    for r in existing:
+        if not (end <= r.starttime or start >= r.endtime):
+            return json_error('Overlapping time block for this day', 400)
+    rec = DoctorAvailability(dayname=day, doctorid=doctor_id, starttime=start, endtime=end)
+    db.session.add(rec)
+    db.session.commit()
+    return jsonify({'dayid': rec.dayid, 'dayname': day, 'starttime': st, 'endtime': en}), 201
+
+@app.route('/api/doctor/me/availability', methods=['DELETE'])
+@jwt_required()
+def api_doctor_availability_delete():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    data = request.get_json() or {}
+    did = data.get('dayid')
+    if did:
+        row = DoctorAvailability.query.filter_by(dayid=int(did), doctorid=doctor_id).first()
+        if not row:
+            return json_error('Not found', 404)
+        db.session.delete(row)
+        db.session.commit()
+        return jsonify({'message': 'deleted'})
+    # fallback by composite
+    day = (data.get('dayname') or '').strip()
+    st = (data.get('starttime') or '').strip()
+    en = (data.get('endtime') or '').strip()
+    try:
+        start = datetime.strptime(st, '%H:%M').time()
+        end = datetime.strptime(en, '%H:%M').time()
+    except Exception:
+        return json_error('Invalid time format', 400)
+    row = DoctorAvailability.query.filter_by(doctorid=doctor_id, dayname=day, starttime=start, endtime=end).first()
+    if not row:
+        return json_error('Not found', 404)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({'message': 'deleted'})
+
+@app.route('/api/doctor/me/stats', methods=['GET'])
+@jwt_required()
+def api_doctor_stats():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    from sqlalchemy import func, case, cast, Float
+    total_appts = db.session.query(func.count(Appointment.appointmentid)).filter(Appointment.doctorid == doctor_id).scalar() or 0
+    avg_rating = db.session.query(func.avg(DoctorReview.rating)).filter(DoctorReview.doctorid == doctor_id).scalar()
+    # Show rate over last 90 days
+    from datetime import timedelta
+    cutoff = datetime.utcnow().date() - timedelta(days=90)
+    sr_q = db.session.query(
+        func.sum(case((Appointment.status == True, 1), else_=0)),
+        func.count(Appointment.appointmentid)
+    ).filter(Appointment.doctorid == doctor_id, Appointment.appointment_date >= cutoff).one()
+    attended, total90 = sr_q[0] or 0, sr_q[1] or 0
+    show_rate = (attended / total90) if total90 else None
+    payload = {
+        'totalAppointments': int(total_appts),
+        'avgRating': float(avg_rating) if avg_rating is not None else None,
+        'showRate': float(round(show_rate, 4)) if show_rate is not None else None,
+        'avgWaitMins': None
+    }
+    return jsonify(payload)
+
+@app.route('/api/doctor/me/appointments', methods=['GET'])
+@jwt_required()
+def api_doctor_appointments():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    try:
+        limit = max(1, min(200, int(request.args.get('limit', '50'))))
+        offset = max(0, int(request.args.get('offset', '0')))
+    except Exception:
+        return json_error('Invalid pagination', 400)
+    rows = (
+        db.session.query(
+            Appointment.appointmentid,
+            Appointment.appointment_date,
+            Appointment.appointment_time,
+            Appointment.userid,
+            Appointment.status,
+            Appointment.reason
+        ).filter(Appointment.doctorid == doctor_id)
+        .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
+        .limit(limit).offset(offset).all()
+    )
+    def _fmt_date(d): return d.strftime('%Y-%m-%d') if d else None
+    def _fmt_time(t): return t.strftime('%H:%M') if t else None
+    items = [{
+        'appointmentid': r.appointmentid,
+        'appointment_date': _fmt_date(r.appointment_date),
+        'appointment_time': _fmt_time(r.appointment_time),
+        'userid': r.userid,
+        'status': bool(r.status),
+        'reason': r.reason
+    } for r in rows]
+    return jsonify(items)
+
+@app.route('/api/doctor/me/reviews', methods=['GET'])
+@jwt_required()
+def api_doctor_reviews():
+    try:
+        doctor_id = _require_doctor_identity()
+    except Exception:
+        return json_error('Unauthorized', 401)
+    try:
+        limit = max(1, min(200, int(request.args.get('limit', '20'))))
+        offset = max(0, int(request.args.get('offset', '0')))
+    except Exception:
+        return json_error('Invalid pagination', 400)
+    # Join user name if available
+    from sqlalchemy import literal_column
+    rows = (
+        db.session.query(
+            DoctorReview.rating,
+            DoctorReview.comments,
+            DoctorReview.created_at,
+            DoctorReview.userid,
+            DoctorReview.appointmentid,
+            User.name.label('user_name')
+        )
+        .outerjoin(User, User.userid == DoctorReview.userid)
+        .filter(DoctorReview.doctorid == doctor_id)
+        .order_by(DoctorReview.created_at.desc())
+        .limit(limit).offset(offset)
+        .all()
+    )
+    def _fmt_dt(dt): return dt.isoformat() if dt else None
+    items = [{
+        'rating': float(r.rating) if r.rating is not None else None,
+        'comments': r.comments,
+        'created_at': _fmt_dt(r.created_at),
+        'userid': r.userid,
+        'appointmentid': r.appointmentid,
+        'user_name': r.user_name
+    } for r in rows]
+    return jsonify(items)
 
 # ----------------------
 # Admin endpoints to approve/reject doctor
@@ -1100,6 +1358,9 @@ def serve_page(page):
         # static assets
         'style.css'
     }
+    # Pretty profile route fallback: if the catch-all is hit for doctor/profile, serve the doc-account page
+    if page == 'doctor/profile':
+        return send_from_directory(_FRONTEND_DIR, 'doc-account.html')
     if page in allowed:
         return send_from_directory(_FRONTEND_DIR, page)
     return ("Not Found", 404)
@@ -1114,6 +1375,11 @@ def favicon():
     png_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAAC0lEQVR42mP8/x8AAwMB/er+3T0AAAAASUVORK5CYII='
     data = b64decode(png_base64)
     return Response(data, mimetype='image/png')
+
+# Pretty route for doctor profile page
+@app.route('/doctor/profile')
+def serve_doctor_profile():
+    return send_from_directory(_FRONTEND_DIR, 'doc-account.html')
 # duplicate route removed; see the earlier get_doctor_detail which includes professional_bio and extended fields
 
 # ----------------------
