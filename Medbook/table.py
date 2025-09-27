@@ -1351,6 +1351,44 @@ _FRONTEND_DIR = Path(__file__).parent
 def serve_root():
     return send_from_directory(_FRONTEND_DIR, 'index.html')
 
+# Pretty routes for main pages
+@app.route('/about')
+def serve_about():
+    return send_from_directory(_FRONTEND_DIR, 'about.html')
+
+@app.route('/find-doctors')
+def serve_find_doctors():
+    return send_from_directory(_FRONTEND_DIR, 'doctors.html')
+
+@app.route('/appointments/book')
+def serve_appointments_book():
+    return send_from_directory(_FRONTEND_DIR, 'booking.html')
+
+@app.route('/appointments/confirm')
+def serve_appointments_confirm():
+    return send_from_directory(_FRONTEND_DIR, 'confirm.html')
+
+@app.route('/user/profile')
+def serve_user_profile():
+    return send_from_directory(_FRONTEND_DIR, 'profile.html')
+
+@app.route('/login')
+def serve_login():
+    return send_from_directory(_FRONTEND_DIR, 'login.html')
+
+@app.route('/doctor/login')
+def serve_doctor_login():
+    return send_from_directory(_FRONTEND_DIR, 'doctor_login.html')
+
+@app.route('/doctor/signup')
+def serve_doctor_signup():
+    return send_from_directory(_FRONTEND_DIR, 'doctor_signup.html')
+
+# Public doctor profile pretty route (client reads doctor id from path)
+@app.route('/doctor/<int:doctor_id>')
+def serve_doctor_public_profile(doctor_id):
+    return send_from_directory(_FRONTEND_DIR, 'doc-profile.html')
+
 @app.route('/<path:page>')
 def serve_page(page):
     allowed = {

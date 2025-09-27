@@ -27,7 +27,7 @@
               <div class='bg-white rounded-lg shadow p-8 max-w-md text-center'>
                 <h1 class='text-xl font-semibold text-gray-900 mb-2'>Log In Needed</h1>
                 <p class='text-sm text-gray-600 mb-6'>Please log in before booking an appointment.</p>
-                <a href='login.html' class='inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium'>Go to Log In</a>
+                <a href='/login' class='inline-flex items-center px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium'>Go to Log In</a>
               </div>
             </div>`;
           });
@@ -43,7 +43,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16 items-center">
                     <div class="flex items-center flex-shrink-0">
-                        <a href="index.html" class="flex items-center">
+                        <a href="/" class="flex items-center">
                             <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
                             <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
                         </a>
@@ -54,23 +54,23 @@
                     </button>
                     <div class="flex-1 flex justify-center">
                     <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-                        <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
-                        <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
-                        <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                        <a href="/" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                        <a href="/find-doctors" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                        <a href="/about" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
                     </div>
                     </div>
                     <div class="hidden md:flex items-center" id="navUserAction">
-                        <a href="login.html" class="btn btn-primary">Log in</a>
+                        <a href="/login" class="btn btn-primary">Log in</a>
                     </div>
                 </div>
             </div>
             <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-200 bg-white" role="menu" aria-label="Mobile navigation">
                 <div class="px-4 pt-4 pb-3 space-y-1">
-                    <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</a>
-                    <a href="doctors.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
-                    <a href="about.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
+                    <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</a>
+                    <a href="/find-doctors" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
+                    <a href="/about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
                     <div class="pt-2 border-t border-gray-100">
-                        <a href="login.html" class="w-full btn btn-primary full-width">Log in</a>
+                        <a href="/login" class="w-full btn btn-primary full-width">Log in</a>
                     </div>
                 </div>
             </div>
@@ -217,9 +217,9 @@ AOS.init({duration:800,easing:'ease-in-out',once:true}); feather.replace();
                 </div>`;
             document.getElementById('doctorProfileBtn').addEventListener('click',()=>{
                  const did = localStorage.getItem('doctorId');
-                 if(did) window.location.href = 'doc-profile.html?doctorid='+did; else window.location.href='doctor_login.html';
+                 if(did) window.location.href = '/doctor/'+did; else window.location.href='/doctor/login';
             });
-            document.getElementById('doctorLogoutBtn').addEventListener('click',()=>{localStorage.removeItem('doctorLoggedIn');localStorage.removeItem('doctorId');localStorage.removeItem('doctorName'); window.location.href='doctor_login.html';});
+            document.getElementById('doctorLogoutBtn').addEventListener('click',()=>{localStorage.removeItem('doctorLoggedIn');localStorage.removeItem('doctorId');localStorage.removeItem('doctorName'); window.location.href='/doctor/login';});
     } else if(isUser){
       navUserAction.innerHTML = `
         <div class="flex items-center space-x-2">
@@ -228,12 +228,12 @@ AOS.init({duration:800,easing:'ease-in-out',once:true}); feather.replace();
           </button>
           <button id="logoutBtn" class="text-sm text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-2 py-1">Logout</button>
         </div>`;
-      document.getElementById('profileBtn').addEventListener('click',()=>window.location.href='profile.html');
-      document.getElementById('logoutBtn').addEventListener('click',()=>{localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userId'); window.location.href='login.html';});
+    document.getElementById('profileBtn').addEventListener('click',()=>window.location.href='/user/profile');
+    document.getElementById('logoutBtn').addEventListener('click',()=>{localStorage.removeItem('isLoggedIn'); localStorage.removeItem('userId'); window.location.href='/login';});
     } else {
             navUserAction.innerHTML = `<div class='flex items-center space-x-2'>
-                <a href='login.html' class='bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'>User Log In</a>
-                <a href='doctor_login.html' class='text-sm text-gray-600 hover:text-gray-800'>Doctor Log In</a>
+                <a href='/login' class='bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium'>User Log In</a>
+                <a href='/doctor/login' class='text-sm text-gray-600 hover:text-gray-800'>Doctor Log In</a>
             </div>`;
     }
 })();
@@ -342,8 +342,8 @@ if(backSearchBtn){
         if(hospSel && hospSel.value) params.push(`hospital=${encodeURIComponent(hospSel.value)}`);
         if(dateSel && dateSel.value) params.push(`date=${encodeURIComponent(dateSel.value)}`);
         let url = 'doctors.html';
-        if(params.length) url += '?' + params.join('&');
-        window.location.href = url;
+    if(params.length) url = url + '?' + params.join('&');
+    window.location.href = '/find-doctors' + (params.length ? ('?' + params.join('&')) : '');
     });
 }
 
@@ -354,7 +354,7 @@ backBtn.addEventListener('click', () => {
     if (qs.get('f_specialty')) backParams.append('specialty', qs.get('f_specialty'));
     if (qs.get('f_hospital')) backParams.append('hospital', qs.get('f_hospital'));
     if (preDate) backParams.append('date', preDate);
-    window.location.href = 'doctors.html' + (backParams.toString()? ('?' + backParams.toString()) : '');
+    window.location.href = '/find-doctors' + (backParams.toString()? ('?' + backParams.toString()) : '');
 });
 
 function formatDate(d){
@@ -479,7 +479,7 @@ continueBtn.addEventListener('click', () => {
     // Preserve original filter context for navigating back from confirm if desired
     if (qs.get('f_specialty')) params.append('f_specialty', qs.get('f_specialty'));
     if (qs.get('f_hospital')) params.append('f_hospital', qs.get('f_hospital'));
-    window.location.href = 'confirm.html?' + params.toString();
+    window.location.href = '/appointments/confirm?' + params.toString();
 });
 </script>
 </body>

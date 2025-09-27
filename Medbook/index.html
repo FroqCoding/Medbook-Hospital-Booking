@@ -67,7 +67,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center flex-shrink-0">
-                    <a href="index.html" class="flex items-center">
+                    <a href="/" class="flex items-center">
                         <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
                         <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
                     </a>
@@ -78,23 +78,23 @@
                 </button>
                 <div class="flex-1 flex justify-center">
                 <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
-                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
-                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                    <a href="/" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="/find-doctors" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="/about" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
                 </div>
                 </div>
                 <div class="hidden md:flex items-center" id="navUserAction">
-                    <a href="login.html" class="btn btn-primary">Log in</a>
+                    <a href="/login" class="btn btn-primary">Log in</a>
                 </div>
             </div>
         </div>
         <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-200 bg-white" role="menu" aria-label="Mobile navigation">
             <div class="px-4 pt-4 pb-3 space-y-1">
-                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">Home</a>
-                <a href="doctors.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
-                <a href="about.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
+                <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-50">Home</a>
+                <a href="/find-doctors" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
+                <a href="/about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
                 <div class="pt-2 border-t border-gray-100">
-                    <a href="login.html" class="w-full btn btn-primary full-width">Log in</a>
+                    <a href="/login" class="w-full btn btn-primary full-width">Log in</a>
                 </div>
             </div>
         </div>
@@ -111,7 +111,7 @@
                     Find and book appointments with top specialists. Fast, easy, and secure.
                 </p>
                 <div class="mt-10" data-aos="fade-up" data-aos-delay="200">
-                    <a href="doctors.html" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-100">
+                    <a href="/find-doctors" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-100">
                         Find a Doctor
                         <i data-feather="arrow-right" class="ml-2"></i>
                     </a>
@@ -380,7 +380,7 @@
             </h2>
             <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0" data-aos="fade-up" data-aos-delay="200">
                 <div class="inline-flex rounded-md shadow">
-                    <a href="doctors.html" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-blue-50">
+                    <a href="/find-doctors" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-blue-50">
                         Book Now
                     </a>
                 </div>
@@ -414,11 +414,11 @@
                     </div>
                 `;
                 document.getElementById('profileBtn').addEventListener('click', function() {
-                    window.location.href = 'profile.html';
+                    window.location.href = '/user/profile';
                 });
                 document.getElementById('logoutBtn').addEventListener('click', function() {
                     localStorage.removeItem('isLoggedIn');
-                    window.location.href = 'login.html';
+                    window.location.href = '/login';
                 });
             }
         });
@@ -448,7 +448,7 @@
                     e.preventDefault();
                     const specialty = document.getElementById('specialty').value;
                     const hospital = document.getElementById('hospital').value;
-                    let url = 'doctors.html';
+                    let url = '/find-doctors';
                     const params = [];
                     if (specialty) params.push(`specialty=${encodeURIComponent(specialty)}`);
                     if (hospital) params.push(`hospital=${encodeURIComponent(hospital)}`);
@@ -474,7 +474,7 @@
     </div>`;
     document.body.insertAdjacentHTML('beforeend',modalHtml);
     const modal = document.getElementById('loginPromptModal');
-    document.getElementById('goLoginBtn').addEventListener('click',()=>window.location.href='login.html');
+    document.getElementById('goLoginBtn').addEventListener('click',()=>window.location.href='/login');
     document.getElementById('loginPromptBackBtn').addEventListener('click',()=>{modal.classList.add('hidden'); modal.classList.remove('flex');});
     return modal;
   }
@@ -489,7 +489,7 @@
     // Fallback: find CTA by text manually
     document.querySelectorAll('a').forEach(a=>{
       if(a.textContent.trim()==='Book Now' && a.closest('.bg-primary')){
-        a.addEventListener('click',function(e){ e.preventDefault(); requireLogin(e, ()=>window.location.href='doctors.html'); });
+    a.addEventListener('click',function(e){ e.preventDefault(); requireLogin(e, ()=>window.location.href='/find-doctors'); });
       }
     });
   });
@@ -505,7 +505,7 @@
       const spec = labelEl.textContent.trim();
       a.addEventListener('click', function(e){
         e.preventDefault();
-        const target = 'doctors.html?specialty=' + encodeURIComponent(spec);
+    const target = '/find-doctors?specialty=' + encodeURIComponent(spec);
         window.location.href = target;
       });
       a.style.cursor='pointer';

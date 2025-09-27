@@ -17,10 +17,10 @@
 <body class="bg-gray-50 min-h-screen">
     <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <a href="index.html" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 text-xl font-bold text-gray-900">MedBook</span></a>
+            <a href="/" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 text-xl font-bold text-gray-900">MedBook</span></a>
             <div class="hidden md:flex items-center space-x-6 text-sm">
-                <a href="doctors.html" class="text-gray-600 hover:text-gray-900">Doctors</a>
-                <a href="about.html" class="text-gray-600 hover:text-gray-900">About</a>
+                <a href="/find-doctors" class="text-gray-600 hover:text-gray-900">Doctors</a>
+                <a href="/about" class="text-gray-600 hover:text-gray-900">About</a>
                 <button id="navDocLogout" class="text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-3 py-1">Logout</button>
             </div>
         </div>
@@ -224,13 +224,13 @@
 
         function requireAuth(){
             const t = localStorage.getItem(tokenKey);
-            if(!t){ window.location.href='doctor_login.html'; }
+            if(!t){ window.location.href='/doctor/login'; }
             return !!t;
         }
 
         async function apiGet(path){
             const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
-            if(r.status===401){ window.location.href='doctor_login.html'; return null; }
+            if(r.status===401){ window.location.href='/doctor/login'; return null; }
             return r.json();
         }
         async function apiJson(method, path, body){
@@ -239,7 +239,7 @@
                 headers: { 'Content-Type': 'application/json', ...authHeader() },
                 body: JSON.stringify(body||{})
             });
-            if(r.status===401){ window.location.href='doctor_login.html'; return null; }
+            if(r.status===401){ window.location.href='/doctor/login'; return null; }
             const data = await r.json().catch(()=>({}));
             if(!r.ok){ throw new Error(data.message || 'Request failed'); }
             return data;
@@ -462,7 +462,7 @@
                 localStorage.removeItem('doctorLoggedIn');
                 localStorage.removeItem('doctorId');
                 localStorage.removeItem('doctorName');
-                window.location.href = 'doctor_login.html';
+                window.location.href = '/doctor/login';
             });
         }
 

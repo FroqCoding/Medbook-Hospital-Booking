@@ -12,22 +12,22 @@
 <body class="bg-gray-50 min-h-screen flex flex-col">
   <nav class="bg-white shadow-sm">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      <a href="index.html" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 font-bold text-xl text-gray-900">MedBook</span></a>
+  <a href="/" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 font-bold text-xl text-gray-900">MedBook</span></a>
       <button id="mobileNavToggle" class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-controls="mobileNavPanel" aria-expanded="false">
         <span class="sr-only">Open main menu</span>
         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <div class="hidden md:flex items-center space-x-4 text-sm" id="navDesktopActions">
-        <a href="login.html" class="btn btn-secondary">User Log In</a>
-        <a href="doctor_signup.html" class="btn btn-primary">Doctor Sign Up</a>
+  <a href="/login" class="btn btn-secondary">User Log In</a>
+  <a href="/doctor/signup" class="btn btn-primary">Doctor Sign Up</a>
       </div>
     </div>
     <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-200 bg-white" role="menu" aria-label="Mobile navigation">
       <div class="px-4 pt-4 pb-3 space-y-2">
-        <a href="login.html" class="block w-full btn btn-secondary">User Log In</a>
-        <a href="doctor_signup.html" class="block w-full btn btn-primary">Doctor Sign Up</a>
-        <a href="doctors.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
-        <a href="about.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
+  <a href="/login" class="block w-full btn btn-secondary">User Log In</a>
+  <a href="/doctor/signup" class="block w-full btn btn-primary">Doctor Sign Up</a>
+  <a href="/find-doctors" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
+  <a href="/about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
       </div>
     </div>
   </nav>
@@ -45,7 +45,7 @@
         </div>
   <button type="submit" class="btn btn-primary full-width inline-flex items-center justify-center w-full px-4 py-2 rounded-md text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm font-medium">Log in</button>
       </form>
-      <p class="mt-4 text-center text-xs text-gray-500">Need an account? <a href="doctor_signup.html" class="font-medium text-blue-600 hover:text-blue-500">Sign up</a></p>
+  <p class="mt-4 text-center text-xs text-gray-500">Need an account? <a href="/doctor/signup" class="font-medium text-blue-600 hover:text-blue-500">Sign up</a></p>
       <div id="loginError" class="hidden mt-4 text-xs text-red-600 text-center"></div>
     </div>
   </main>

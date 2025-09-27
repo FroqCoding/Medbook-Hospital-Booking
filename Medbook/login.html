@@ -23,7 +23,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center flex-shrink-0">
-                    <a href="index.html" class="flex items-center">
+                    <a href="/" class="flex items-center">
                     <i data-feather="heart" class="text-blue-500 h-8 w-8"></i>
                     <span class="ml-2 text-xl font-bold text-gray-900">MedBook</span>
                     </a>
@@ -34,9 +34,9 @@
                 </button>
                 <div class="flex-1 flex justify-center">
                 <div class="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-                    <a href="index.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
-                    <a href="doctors.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
-                    <a href="about.html" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
+                    <a href="/" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Home</a>
+                    <a href="/find-doctors" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">Doctors</a>
+                    <a href="/about" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-gray-300 text-sm font-medium">About</a>
                 </div>
                 <!-- Removed self-referential login button on login page -->
                 <div class="hidden md:flex items-center" id="navUserAction"></div>
@@ -45,9 +45,9 @@
         <!-- Mobile panel -->
         <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-200 bg-white" role="menu" aria-label="Mobile navigation">
             <div class="px-4 pt-4 pb-3 space-y-1">
-                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</a>
-                <a href="doctors.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
-                <a href="about.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
+                <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Home</a>
+                <a href="/find-doctors" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Doctors</a>
+                <a href="/about" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">About</a>
                 <!-- Removed self-referential mobile login link on login page -->
             </div>
         </div>
@@ -227,9 +227,9 @@
                             </div>
                             <div class="p-8 pt-0 relative">
                                 <p class="text-center mb-3">
-                                    <a href="doctor_login.html" class="underline text-white hover:text-white/90 text-sm">Doctor Sign in</a>
+                                    <a href="/doctor/login" class="underline text-white hover:text-white/90 text-sm">Doctor Sign in</a>
                                 </p>
-                                <a href="doctor_signup.html" class="group inline-flex items-center justify-center w-full px-5 py-3 rounded-md bg-white/95 hover:bg-white text-blue-600 font-semibold text-sm shadow-md transition">
+                                <a href="/doctor/signup" class="group inline-flex items-center justify-center w-full px-5 py-3 rounded-md bg-white/95 hover:bg-white text-blue-600 font-semibold text-sm shadow-md transition">
                                     Become a MedBook Doctor
                                     <i data-feather="arrow-right" class="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1"></i>
                                 </a>
@@ -290,11 +290,11 @@
                     </div>
                 `;
                 document.getElementById('profileBtn').addEventListener('click', function() {
-                    window.location.href = 'profile.html';
+                    window.location.href = '/user/profile';
                 });
                 document.getElementById('logoutBtn').addEventListener('click', function() {
                     localStorage.removeItem('isLoggedIn');
-                    window.location.href = 'login.html';
+                    window.location.href = '/login';
                 });
             }
         });
@@ -356,7 +356,7 @@
             if (res.ok) {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userId', result.userid); // Save userId for profile page
-                window.location.href = 'index.html';
+                window.location.href = '/';
             } else {
                 // Show red error notification
                 const errorNotification = document.getElementById('errorNotification');
