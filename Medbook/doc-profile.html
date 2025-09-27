@@ -201,7 +201,8 @@
             document.querySelectorAll('[data-doc-exp]').forEach(el=> el.textContent = 'N/A');
             document.querySelectorAll('[data-doc-license]').forEach(el=> el.textContent = 'N/A');
             document.querySelectorAll('[data-doc-languages]').forEach(el=> el.textContent = 'N/A');
-            document.querySelectorAll('[data-doc-bio]').forEach(el=> el.textContent = 'N/A');
+            const bioText = (doc.professional_bio && String(doc.professional_bio).trim()) ? doc.professional_bio : 'N/A';
+            document.querySelectorAll('[data-doc-bio]').forEach(el=> el.textContent = bioText);
             const availSummary = document.getElementById('availSummary'); if(availSummary) availSummary.textContent = doc.availability_summary || 'No availability listed';
             const daysList = document.getElementById('availDaysList');
             if(daysList && doc.availability_blocks){

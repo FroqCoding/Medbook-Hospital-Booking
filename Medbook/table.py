@@ -656,6 +656,49 @@ def get_doctors():
     return jsonify(result)
 
 # ----------------------
+# Route to Get Single Doctor (details)
+# ----------------------
+@app.route('/doctors/<int:doctor_id>', methods=['GET'])
+def get_doctor_detail(doctor_id):
+    # Only allow approved doctors to be fetched publicly
+    row = (
+        db.session.query(
+            Doctor,
+            Hospital.name.label('hospital_name')
+        )
+        .join(Hospital, Doctor.hospitalid == Hospital.hospitalid)
+        .filter(Doctor.doctorid == doctor_id, Doctor.approval_status == 'approved')
+        .first()
+    )
+    if not row:
+        return json_error('Doctor not found', 404)
+
+    doc, hospital_name = row
+    # Aggregates
+    review_map = get_review_aggregates([doc.doctorid])
+    availability_map = get_availability_for_doctors([doc.doctorid])
+    rev = review_map.get(doc.doctorid, {})
+    avail = availability_map.get(doc.doctorid, {})
+    payload = {
+        'doctorid': doc.doctorid,
+        'name': doc.name,
+        'speciality': doc.speciality,
+        'email': doc.email,
+        'phone': doc.phone,
+        'hospital': hospital_name,
+        'gender': doc.gender,
+        'date_of_birth': doc.date_of_birth.strftime('%Y-%m-%d') if doc.date_of_birth else None,
+        'medical_license_number': doc.medical_license_number,
+        'years_of_experience': doc.years_of_experience,
+        'professional_bio': doc.professional_bio,
+        'availability_summary': avail.get('summary'),
+        'availability_blocks': avail.get('blocks', []),
+        'review_count': rev.get('review_count', 0),
+        'avg_rating': rev.get('avg_rating')
+    }
+    return jsonify(payload)
+
+# ----------------------
 # Route to Get Doctor Availability
 # ----------------------
 @app.route('/doctors/<int:doctor_id>/availability', methods=['GET'])
