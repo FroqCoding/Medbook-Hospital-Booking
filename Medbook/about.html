@@ -83,7 +83,7 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-2">
+        <div class="grid grid-cols-1 gap-8 place-items-center">
             <!-- Farouq Profile -->
             <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300" data-aos="fade-up">
                 <div class="p-6">
@@ -95,22 +95,6 @@
                     <div class="mt-6">
                         <p class="text-sm text-gray-500 text-center">
                             Passionate about creating innovative web solutions and pushing the boundaries of technology.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mohammed Profile -->
-            <div class="bg-white rounded-lg shadow overflow-hidden profile-card transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
-                <div class="p-6">
-                    <div class="flex flex-col items-center">
-                        <img class="h-32 w-32 rounded-full object-cover mb-4" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Mohammed Alfarra">
-                        <h3 class="text-xl font-medium text-gray-900">Mohammed Alfarra</h3>
-                        <p class="text-sm text-blue-500">Summa Cum Laude FIU Computer Science Graduate | STARS Tutor | Software Engineer & Data Scientist</p>
-                    </div>
-                    <div class="mt-6">
-                        <p class="text-sm text-gray-500 text-center">
-                            Dedicated to solving complex problems through software engineering and data science.
                         </p>
                     </div>
                 </div>
@@ -156,8 +140,6 @@
                             document.querySelectorAll('a[data-nav]').forEach(a=>{
                                 if(a.getAttribute('data-nav')===key){
                                     a.classList.add('text-blue-600','font-semibold');
-                                    a.style.textDecoration='underline';
-                                    a.style.textUnderlineOffset='4px';
                                     a.style.borderBottomColor='#2563eb';
                                 }
                             });
