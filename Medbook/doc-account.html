@@ -14,7 +14,7 @@
         .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 9999px; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a href="/" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 text-xl font-bold text-gray-900">MedBook</span></a>
@@ -26,7 +26,7 @@
         </div>
     </nav>
 
-    <main>
+    <main class="flex-grow">
         <div id="approvalBanner" class="hidden bg-yellow-50 border-y border-yellow-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-yellow-900 flex items-center">
                 <i data-feather="alert-triangle" class="h-4 w-4 mr-2"></i>
@@ -38,7 +38,7 @@
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div class="flex items-center">
-                        <img class="h-16 w-16 rounded-full" src="https://i.pravatar.cc/128?img=5" alt="Doctor profile" />
+                        <img class="h-16 w-16 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Doctor profile" />
                         <div class="ml-4">
                             <div class="flex items-center space-x-2">
                                 <h1 id="doctorName" class="text-2xl font-bold text-gray-900">Doctor</h1>
@@ -46,7 +46,6 @@
                             </div>
                             <div class="flex items-center text-sm mt-1">
                                 <span id="doctorSpecialty" class="text-blue-600">—</span>
-                                <span id="reviewsSummary" class="ml-2 text-gray-500">—</span>
                             </div>
                         </div>
                     </div>
@@ -91,7 +90,7 @@
                             <button data-tab="profile" class="tab-btn border-b-2 border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 text-sm font-medium">Profile</button>
                             <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Availability</button>
                             <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Appointments</button>
-                            <button data-tab="reviews" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm font-medium">Reviews</button>
+                            
                         </nav>
                     </div>
 
@@ -183,12 +182,7 @@
                             </div>
                         </div>
 
-                        <div id="tab-reviews" class="tab-content">
-                            <div class="bg-white shadow rounded-lg overflow-hidden">
-                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Latest Reviews</h2></div>
-                                <div id="reviewsList" class="px-6 py-4 divide-y divide-gray-100"></div>
-                            </div>
-                        </div>
+                        
                     </div>
                 </section>
             </div>
@@ -243,16 +237,6 @@
             const data = await r.json().catch(()=>({}));
             if(!r.ok){ throw new Error(data.message || 'Request failed'); }
             return data;
-        }
-
-        function renderStars(avg) {
-            if(avg==null) return 'No ratings';
-            const filled = Math.round(avg);
-            let html = '';
-            for(let i=1;i<=5;i++){
-                html += `<i data-feather="star" class="h-4 w-4 ${i<=filled ? 'text-yellow-400 fill-yellow-400' : ''}"></i>`;
-            }
-            return html + `<span class="ml-1 text-xs text-gray-500">(${avg.toFixed(1)})</span>`;
         }
 
         function fmtTime24To12(hhmm){
@@ -368,8 +352,6 @@
             $('#statShowRate').textContent = s.showRate!=null ? Math.round(s.showRate*100)+'%' : '—';
             $('#statWait').textContent = s.avgWaitMins!=null ? s.avgWaitMins : '—';
             // header summary
-            const starsHtml = renderStars(s.avgRating);
-            $('#reviewsSummary').innerHTML = starsHtml;
             feather.replace();
         }
 
@@ -394,23 +376,6 @@
                     <span class="ml-2 text-xs ${r.status?'text-green-700':'text-red-700'}">${r.status?'Scheduled':'Cancelled'}</span>
                 </div>`;
             }).join('');
-        }
-
-        async function loadReviews(){
-            const rows = await apiGet('/api/doctor/me/reviews?limit=20');
-            if(rows==null) return;
-            const wrap = $('#reviewsList');
-            if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-500">No reviews yet.</p>'; return; }
-            wrap.innerHTML = rows.map(r=>{
-                const stars = renderStars(r.rating||0);
-                const who = r.user_name ? `by ${r.user_name}` : '';
-                return `<div class="py-3">
-                    <div class="flex items-center text-sm">${stars}</div>
-                    <div class="text-xs text-gray-500">${new Date(r.created_at).toLocaleString()} ${who}</div>
-                    <div class="text-sm text-gray-800 mt-1">${r.comments||''}</div>
-                </div>`;
-            }).join('');
-            feather.replace();
         }
 
         function wireEdit(){
@@ -476,7 +441,6 @@
             await Promise.all([loadProfile(), loadStats()]);
             await loadAvailability();
             await loadAppointments();
-            await loadReviews();
             feather.replace();
         })();
     </script>
