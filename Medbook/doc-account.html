@@ -147,27 +147,7 @@
                         </div>
 
                         <div id="tab-availability" class="tab-content">
-                            <!-- Visual schedule grid -->
-                            <div class="bg-white shadow rounded-lg overflow-hidden">
-                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                                    <h2 class="text-lg font-medium text-gray-900">Weekly Schedule</h2>
-                                    <div class="hidden md:flex items-center gap-3 text-xs text-gray-600">
-                                        <span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500/20 border border-blue-400/60"></span> Clinic</span>
-                                        <span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-400/60"></span> Evening</span>
-                                    </div>
-                                </div>
-                                <div class="px-6 py-4">
-                                    <div id="schedGrid" class="relative grid grid-cols-[60px_repeat(7,minmax(0,1fr))] border border-gray-200 rounded-xl overflow-hidden bg-white">
-                                        <!-- time column -->
-                                        <div class="bg-gray-50 border-r border-gray-200">
-                                            <div class="h-10"></div>
-                                            <div id="schedHours" class="relative"></div>
-                                        </div>
-                                        <!-- day headers & columns will be injected by JS -->
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-3">Visual only. Data-driven from your availability.</p>
-                                </div>
-                            </div>
+                            <!-- Availability management only -->
 
                             <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
                                 <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Add New Availability</h2></div>
@@ -209,6 +189,17 @@
 
                         <div id="tab-appointments" class="tab-content">
                             <div class="bg-white shadow rounded-lg overflow-hidden">
+                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                    <h2 class="text-lg font-medium text-gray-900">Schedule</h2>
+                                    <div class="hidden md:flex items-center gap-3 text-xs text-gray-600">
+                                        <span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500/20 border border-indigo-400/60"></span> Appointments</span>
+                                    </div>
+                                </div>
+                                <div class="px-6 py-4">
+                                    <div id="apptSchedWrap"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
                                 <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Recent Appointments</h2></div>
                                 <div id="apptsList" class="px-6 py-4 divide-y divide-gray-100"></div>
                             </div>
@@ -443,14 +434,15 @@
             // can edit iff approved
             const me = await apiGet('/api/doctor/me');
             const approved = me && me.doctor && me.doctor.approval_status==='approved';
-            // render visual schedule instead of list
-            renderSchedule(rows);
+            // render grouped list for quick review
             renderAvailabilityGrouped(rows);
         }
 
         async function loadAppointments(){
-            const rows = await apiGet('/api/doctor/me/appointments?limit=20');
+            const rows = await apiGet('/api/doctor/me/appointments?limit=100');
             if(rows==null) return;
+            // render schedule from appointments only
+            renderApptSchedule(rows);
             const wrap = $('#apptsList');
             if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-500">No appointments.</p>'; return; }
             wrap.innerHTML = rows.map(r=>{
@@ -528,126 +520,111 @@
             });
         }
 
-        // Build visual weekly schedule from availability rows
-        function renderSchedule(rows){
+        // Build horizontal weekly schedule (weekdays as rows, time as columns) from appointments
+        function renderApptSchedule(appts){
+            const WRAP = document.getElementById('apptSchedWrap');
+            if(!WRAP) return;
+            WRAP.innerHTML = '';
+
             const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             const LABELS = {Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', Sun:'Sun'};
             const START_H = 8; // 08:00
             const END_H = 20;  // 20:00
             const MIN_PER_H = 60;
-            const TOTAL_MIN = (END_H-START_H)*MIN_PER_H;
-            const pxPerMin = 2; // 2px per minute (30min = 60px row height)
+            const pxPerMin = 2; // horizontal scale → 12h = 1440px width
+            const totalWidth = (END_H-START_H)*MIN_PER_H*pxPerMin; // in px
 
             // helpers
-            const toMinutes = (t)=>{
-                if(!t) return 0;
-                const parts = String(t).split(':');
-                const hh = parseInt(parts[0]||'0',10);
-                const mm = parseInt(parts[1]||'0',10);
-                return hh*60 + mm;
-            };
-            const clamp = (m)=> Math.max(START_H*60, Math.min(END_H*60, m));
-
-            const grid = document.getElementById('schedGrid');
-            if(!grid) return;
-            // Clear all except the first left time column wrapper we'll rebuild entirely for simplicity
-            grid.innerHTML = '';
-
-            // Left time column
-            const left = document.createElement('div');
-            left.className = 'bg-gray-50 border-r border-gray-200';
-            left.innerHTML = '<div class="h-10"></div><div id="schedHours" class="relative"></div>';
-            grid.appendChild(left);
-
-            // Day headers
-            const todayShort = new Date().toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3).toLowerCase();
-            for(const day of DAYS){
-                const el = document.createElement('div');
-                el.className = 'h-10 border-b border-gray-200 flex items-center justify-center text-sm font-medium';
-                el.textContent = LABELS[day];
-                if(day.slice(0,3).toLowerCase()===todayShort){ el.classList.add('text-blue-600'); }
-                grid.appendChild(el);
+            function toMinutes(t){ if(!t) return 0; const [hh,mm] = String(t).split(':'); return (parseInt(hh||'0',10)*60 + parseInt(mm||'0',10)); }
+            function pretty(t){ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'PM':'AM'; const hr = ((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; }
+            function clamp(m){ return Math.max(START_H*60, Math.min(END_H*60, m)); }
+            function dayKeyFrom(dateStr){
+                // Try to parse appointment_date and get weekday short
+                const d = new Date(dateStr);
+                if(Number.isNaN(d.getTime())) return null;
+                const wd = d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
+                const map = {Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat',Sun:'Sun'};
+                return map[wd] || null;
             }
 
-            // Day columns with hourly guidelines
-            const dayCols = {};
-            for(const day of DAYS){
-                const col = document.createElement('div');
-                col.className = 'relative border-l border-gray-100';
-                for(let h=START_H; h<=END_H; h++){
-                    const line = document.createElement('div');
-                    line.className = 'border-t border-dashed border-gray-100';
-                    line.style.height = (MIN_PER_H*pxPerMin)+'px';
-                    col.appendChild(line);
-                }
-                grid.appendChild(col);
-                dayCols[day] = col;
-            }
+            // Header: time scale
+            const header = document.createElement('div');
+            header.className = 'flex items-stretch';
+            header.innerHTML = `<div class="w-20 flex-shrink-0"></div><div class="relative overflow-x-auto" style="width:100%"><div class="relative" style="width:${totalWidth}px">${Array.from({length: END_H-START_H+1}).map((_,i)=>{
+                const h = START_H+i; const x = (h-START_H)*MIN_PER_H*pxPerMin;
+                return `<div class='absolute top-0 h-10 border-l border-gray-200 text-[11px] text-gray-500' style='left:${x}px; width:0'><div class='-translate-x-1/2 translate-y-1/2'>${String(h).padStart(2,'0')}:00</div></div>`;
+            }).join('')}</div></div>`;
+            WRAP.appendChild(header);
 
-            // Hours labels
-            const hoursWrap = document.getElementById('schedHours');
-            if(hoursWrap){
-                hoursWrap.innerHTML='';
-                for(let h=START_H; h<=END_H; h++){
-                    const label = document.createElement('div');
-                    label.className = 'text-[11px] text-gray-500 flex items-start justify-end pr-2';
-                    label.style.height = (MIN_PER_H*pxPerMin)+'px';
-                    label.textContent = String(h).padStart(2,'0')+':00';
-                    hoursWrap.appendChild(label);
-                }
-            }
+            // Body rows per day
+            const body = document.createElement('div');
+            body.className = 'mt-1';
+            WRAP.appendChild(body);
 
-            // Place availability blocks
-            (rows||[]).forEach(r=>{
-                const col = dayCols[r.dayname]; if(!col) return;
-                const startM = clamp(toMinutes(r.starttime));
-                const endM = clamp(toMinutes(r.endtime));
-                if(endM<=startM) return;
-                const top = (startM - START_H*60)*pxPerMin;
-                const height = Math.max(16, (endM - startM)*pxPerMin);
-                const evening = startM >= 16*60;
-
-                const block = document.createElement('div');
-                block.className = 'slot absolute left-2 right-2 rounded-lg border text-xs leading-tight p-2 '+
-                                  (evening ? 'bg-emerald-500/15 border-emerald-400/60 text-emerald-800'
-                                           : 'bg-blue-500/15 border-blue-400/60 text-blue-800');
-                block.style.top = top+'px';
-                block.style.height = height+'px';
-
-                const pretty = (t)=>{
-                    const [hh,mm] = String(t).split(':');
-                    const h = parseInt(hh||'0',10); const m = parseInt(mm||'0',10);
-                    const ampm = h>=12 ? 'PM':'AM';
-                    const hr = ((h+11)%12)+1;
-                    return hr+':'+String(m).padStart(2,'0')+' '+ampm;
-                };
-
-                block.innerHTML = '<div class="font-medium">'+pretty(r.starttime)+' – '+pretty(r.endtime)+'</div>'+
-                                   '<div class="text-[10px] text-gray-600">Clinic Hours</div>';
-                col.appendChild(block);
+            const rowsByDay = Object.fromEntries(DAYS.map(d=>[d,[]]));
+            (appts||[]).forEach(r=>{
+                // Skip cancelled if status falsy or 'Cancelled'
+                if(r.status===false || String(r.status).toLowerCase()==='cancelled') return;
+                const dk = dayKeyFrom(r.appointment_date);
+                if(!dk) return;
+                rowsByDay[dk].push(r);
             });
 
-            // Now line (optional)
-            (function renderNow(){
-                const now = new Date();
-                const wd = now.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
-                const map = {Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6};
-                const key = Object.keys(map).find(k=> k.toLowerCase()===wd.toLowerCase());
-                if(!key) return;
-                const mins = now.getHours()*60 + now.getMinutes();
-                if(mins < START_H*60 || mins > END_H*60) return;
-                const idx = DAYS.indexOf(key);
-                if(idx<0) return;
-                const col = grid.children[1 + DAYS.length + idx + 1]; // left col + headers count + offset
-                // Safer lookup
-                const dayCol = dayCols[key];
-                if(!dayCol) return;
-                const y = (mins - START_H*60)*pxPerMin;
-                const line = document.createElement('div');
-                line.className = 'now-line bg-rose-500/80';
-                line.style.top = y+'px';
-                dayCol.appendChild(line);
-            })();
+            const now = new Date();
+            const curDayKey = now.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
+            const todayKey = {Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat',Sun:'Sun'}[curDayKey];
+            const nowMins = now.getHours()*60 + now.getMinutes();
+
+            for(const day of DAYS){
+                const row = document.createElement('div');
+                row.className = 'flex items-stretch h-14';
+                const label = document.createElement('div');
+                label.className = 'w-20 flex-shrink-0 flex items-center justify-center text-sm font-medium border-r border-gray-200 '+(day===todayKey?'text-blue-600':'text-gray-700');
+                label.textContent = LABELS[day];
+                row.appendChild(label);
+
+                const trackWrap = document.createElement('div');
+                trackWrap.className = 'relative overflow-x-auto';
+                const track = document.createElement('div');
+                track.className = 'relative border-t border-gray-100';
+                track.style.width = totalWidth+'px';
+                track.style.height = '56px';
+                // Guidelines
+                for(let h=START_H; h<=END_H; h++){
+                    const x = (h-START_H)*MIN_PER_H*pxPerMin;
+                    const g = document.createElement('div');
+                    g.className = 'absolute top-0 bottom-0 border-l border-dashed border-gray-100';
+                    g.style.left = x+'px';
+                    track.appendChild(g);
+                }
+
+                // Place appointment markers
+                for(const a of rowsByDay[day]){
+                    const m = clamp(toMinutes(a.appointment_time));
+                    const x = (m - START_H*60)*pxPerMin;
+                    const block = document.createElement('div');
+                    block.className = 'slot absolute top-2 h-10 w-20 rounded-md border bg-indigo-500/15 border-indigo-400/60 text-indigo-800 text-xs px-2 flex items-center';
+                    block.style.left = x+'px';
+                    block.innerHTML = `<div class='truncate'>${pretty(a.appointment_time)}</div>`;
+                    track.appendChild(block);
+                }
+
+                // Now line on today
+                if(day===todayKey && nowMins>=START_H*60 && nowMins<=END_H*60){
+                    const xNow = (nowMins - START_H*60)*pxPerMin;
+                    const line = document.createElement('div');
+                    line.className = 'now-line bg-rose-500/80';
+                    line.style.left = xNow+'px';
+                    line.style.top = '0';
+                    line.style.bottom = '0';
+                    line.style.width = '2px';
+                    track.appendChild(line);
+                }
+
+                trackWrap.appendChild(track);
+                row.appendChild(trackWrap);
+                body.appendChild(row);
+            }
         }
 
         function wireLogout(){
