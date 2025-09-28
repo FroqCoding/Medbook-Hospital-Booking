@@ -17,109 +17,95 @@
         /* schedule visuals */
         .slot { backdrop-filter: saturate(1.2) blur(2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
         .now-line { position:absolute; left:0; right:0; height:2px; }
+        /* appointments grid visuals */
+        .hour-bg {
+            background-image:
+                linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px),
+                linear-gradient(to right, rgba(0,0,0,0.06) 1px, transparent 1px);
+            background-size: 100% 48px, 120px 100%; /* 48px per row, 120px per hour */
+        }
+        .chip { box-shadow: 0 6px 16px rgba(0,0,0,.08); }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <a href="/" class="flex items-center"><i data-feather="heart" class="text-blue-500 h-8 w-8"></i><span class="ml-2 text-xl font-bold text-gray-900">MedBook</span></a>
-            <div class="hidden md:flex items-center space-x-6 text-sm">
-                <a href="/find-doctors" class="text-gray-600 hover:text-gray-900">Doctors</a>
-                <a href="/about" class="text-gray-600 hover:text-gray-900">About</a>
-                <button id="navDocLogout" class="text-gray-700 bg-gray-200 hover:bg-gray-300 rounded px-3 py-1">Logout</button>
-            </div>
-        </div>
-    </nav>
+    <script>
+        function renderApptSchedule(appts){
+            const START_H = 8;
+            const END_H = 20;
+            const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            const LABELS = {Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', Sun:'Sun'};
+            const COLORS  = ['indigo','sky','emerald','amber','rose','violet','cyan'];
+            const rangeMin = START_H*60, totalMin = (END_H-START_H)*60;
+            const pct = (minutes)=> ((minutes - rangeMin) / totalMin) * 100;
+            const toMin = (t)=>{ if(!t) return 0; const [h,m] = String(t).split(':').map(Number); return h*60+m; };
+            const clamp = (m)=> Math.max(rangeMin, Math.min(rangeMin+totalMin, m));
+            const pretty = (t)=>{ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'PM':'AM'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
+            const dayKeyFrom = (dateStr)=>{ const d=new Date(dateStr); if(Number.isNaN(d.getTime())) return null; return d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3); };
 
-    <main class="flex-grow">
-        <div id="approvalBanner" class="hidden bg-yellow-50 border-y border-yellow-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-yellow-900 flex items-center">
-                <i data-feather="alert-triangle" class="h-4 w-4 mr-2"></i>
-                <span>Your account is pending approval. Editing is disabled until an admin approves your profile.</span>
-            </div>
-        </div>
+            // Build header hour labels
+            const hourGrid = document.getElementById('apptHourGrid');
+            const hourTpl = document.getElementById('hourLabelTpl');
+            if(hourGrid){
+                hourGrid.innerHTML='';
+                for(let h=START_H; h<=END_H; h++){
+                    const node = hourTpl.content.firstElementChild.cloneNode(true);
+                    node.querySelector('div').textContent = `${String(((h+11)%12)+1).padStart(2,'0')}:00`;
+                    hourGrid.appendChild(node);
+                }
+            }
 
-        <div class="bg-white shadow">
-            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div class="flex items-center">
-                        <img class="h-16 w-16 rounded-full object-cover" src="https://huggingface.co/spaces/froqAI/medbook-trial/resolve/main/images/Dark Anonymous Pfp.jpg" alt="Doctor profile" />
-                        <div class="ml-4">
-                            <div class="flex items-center space-x-2">
-                                <h1 id="doctorName" class="text-2xl font-bold text-gray-900">Doctor</h1>
-                                <span id="approvalBadge" class="hidden badge bg-yellow-100 text-yellow-800">Pending</span>
-                            </div>
-                            <div class="flex items-center text-sm mt-1">
-                                <span id="doctorSpecialty" class="text-blue-600">—</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-4 md:mt-0">
-                        <button id="editProfileBtn" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <i data-feather="edit-2" class="mr-2 h-4 w-4"></i>
-                            Edit Profile
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            // Build rows
+            const rowsWrap = document.getElementById('apptRows');
+            if(!rowsWrap) return;
+            rowsWrap.innerHTML = '';
+            const rowsByDay = Object.fromEntries(DAYS.map(d=>[d,[]]));
+            (appts||[]).forEach(r=>{
+                if(r.status===false || String(r.status).toLowerCase()==='cancelled') return;
+                const dk = dayKeyFrom(r.appointment_date);
+                if(!dk) return;
+                // Normalize to Mon..Sun keys from short names
+                const map = {Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat',Sun:'Sun'};
+                const key = map[dk] || null; if(!key) return;
+                rowsByDay[key].push(r);
+            });
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div id="toast" class="hidden mb-4 px-4 py-3 rounded text-sm"></div>
-            <div class="lg:grid lg:grid-cols-12 lg:gap-8">
-                <aside class="lg:col-span-4 mb-8 lg:mb-0">
-                    <div class="bg-white shadow rounded-lg overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Profile Information</h2></div>
-                        <div class="px-6 py-4 space-y-3">
-                            <div class="flex items-center"><i data-feather="mail" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorEmail" class="text-sm text-gray-700">—</span></div>
-                            <div class="flex items-center"><i data-feather="phone" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorPhone" class="text-sm text-gray-700">—</span></div>
-                            <div class="flex items-center"><i data-feather="map-pin" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorHospital" class="text-sm text-gray-700">—</span></div>
-                            <div class="flex items-center"><i data-feather="briefcase" class="h-5 w-5 text-gray-400 mr-3"></i><span id="doctorExperience" class="text-sm text-gray-700">—</span></div>
-                        </div>
-                    </div>
+            const now = new Date();
+            const todayShort = now.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
+            const nowMins = now.getHours()*60 + now.getMinutes();
 
-                    <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
-                        <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Quick Stats</h2></div>
-                        <div class="px-6 py-4 grid grid-cols-2 gap-4 text-center">
-                            <div><p id="statTotal" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Total Appointments</p></div>
-                            <div><p id="statAvgRating" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Average Rating</p></div>
-                            <div><p id="statShowRate" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Show Rate</p></div>
-                            <div><p id="statWait" class="text-2xl font-bold text-blue-600">—</p><p class="text-xs text-gray-500">Avg Wait (min)</p></div>
-                        </div>
-                    </div>
-                </aside>
+            DAYS.forEach((day, idx)=>{
+                const label = document.createElement('div');
+                label.className = 'sticky left-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100 h-12 flex items-center justify-center text-sm font-medium';
+                if(todayShort.toLowerCase()===day.toLowerCase()) label.classList.add('text-blue-600');
+                label.textContent = LABELS[day];
+                rowsWrap.appendChild(label);
 
-                <section class="lg:col-span-8">
-                    <div class="border-b border-gray-200">
-                        <nav class="-mb-px flex space-x-8">
-                            <button data-tab="profile" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Profile</button>
-                            <button data-tab="availability" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Availability</button>
-                            <button data-tab="appointments" class="tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-sm">Appointments</button>
-                            
-                        </nav>
-                    </div>
+                const cell = document.createElement('div');
+                cell.className = 'relative h-12 hour-bg border-b border-gray-100';
 
-                    <div class="mt-6">
-                        <div id="tab-profile" class="tab-content active">
-                            <div class="bg-white shadow rounded-lg overflow-hidden">
-                                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                                    <h2 class="text-lg font-medium text-gray-900">About</h2>
-                                </div>
-                                <div class="px-6 py-4">
-                                    <p id="doctorBio" class="text-sm text-gray-700">—</p>
-                                </div>
-                            </div>
+                // Now line
+                if(todayShort.toLowerCase()===day.toLowerCase() && nowMins>=rangeMin && nowMins<=rangeMin+totalMin){
+                    const line = document.createElement('div');
+                    line.className = 'absolute top-0 bottom-0 w-0.5 bg-rose-500/80';
+                    line.style.left = pct(nowMins)+'%';
+                    cell.appendChild(line);
+                }
 
-                            <div id="editFormWrap" class="bg-white shadow rounded-lg overflow-hidden mt-6 hidden">
-                                <div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-medium text-gray-900">Edit Profile</h2></div>
-                                <form id="editForm" class="px-6 py-4 grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                                        <input id="fEmail" type="email" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm" required />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Phone</label>
-                                        <input id="fPhone" type="text" class="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 text-sm" required />
+                // Chips
+                rowsByDay[day].forEach((a,i)=>{
+                    const s = clamp(toMin(a.appointment_time));
+                    const e = s + 30; // assume 30 min slots unless end provided in future
+                    const chip = document.createElement('div');
+                    const color = COLORS[(idx + i) % COLORS.length];
+                    chip.className = `chip absolute top-1 h-8 px-2 flex items-center rounded-md border text-xs bg-${color}-500/15 border-${color}-400/60 text-${color}-800`;
+                    chip.style.left = pct(s)+'%';
+                    chip.style.width = (pct(e)-pct(s))+'%';
+                    chip.innerHTML = `<span class="truncate">${pretty(a.appointment_time)}</span>`;
+                    cell.appendChild(chip);
+                });
+
+                rowsWrap.appendChild(cell);
+            });
+        }
+    </script>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Gender</label>
@@ -196,7 +182,28 @@
                                     </div>
                                 </div>
                                 <div class="px-6 py-4">
-                                    <div id="apptSchedWrap"></div>
+                                    <div id="apptSchedWrap">
+                                        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                                            <div class="grid grid-cols-[84px_minmax(640px,1fr)]">
+                                                <!-- Header row -->
+                                                <div class="sticky left-0 z-10 bg-white/80 backdrop-blur border-b border-gray-200 h-12 flex items-center justify-center text-sm font-medium">Day</div>
+                                                <div class="relative h-12 hour-bg border-b border-gray-200">
+                                                    <div class="absolute inset-0 pointer-events-none">
+                                                        <div class="grid grid-cols-[repeat(13,120px)] h-full" id="apptHourGrid">
+                                                            <template id="hourLabelTpl">
+                                                                <div class="relative">
+                                                                    <div class="absolute top-1 left-1/2 -translate-x-1/2 text-[11px] text-gray-500"></div>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Day rows injected below -->
+                                                <div id="apptRows"></div>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-3">Visual-only grid; chips are placed from appointment times.</p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="bg-white shadow rounded-lg overflow-hidden mt-6">
