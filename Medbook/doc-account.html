@@ -1,572 +1,702 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor Account - MedBook</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <style>
-    :root { --cell: 56px; }
-    .hour-bg{
-      background-image:
-        linear-gradient(to bottom, rgba(17,24,39,0.06) 1px, transparent 1px),
-        linear-gradient(to right, rgba(17,24,39,0.06) 1px, transparent 1px);
-      background-size: 100% var(--cell), var(--cell) 100%;
-      background-position: 0 0, 0 0;
-      background-repeat: repeat;
-    }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Account - MedBook</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        :root { --cell: 56px; }
+        .hour-bg{
+            background-image:
+                linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px),
+                linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px);
+            background-size: 100% var(--cell), var(--cell) 100%;
+            background-position: 0 0, 0 0;
+            background-repeat: repeat;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+    
 </head>
-<body class="min-h-screen bg-gray-50 text-gray-800">
-  <div class="max-w-6xl mx-auto p-4 md:p-6">
-    <header class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-semibold">Doctor Dashboard</h1>
-      <button id="navDocLogout" class="text-red-600 hover:text-red-800 flex items-center gap-2">
-        <i data-feather="log-out" class="w-4 h-4"></i> Logout
-      </button>
-    </header>
+<body class="min-h-screen bg-gray-900 text-gray-100">
+    <div class="max-w-6xl mx-auto p-4 md:p-6">
+        <header class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-semibold text-emerald-400 flex items-center gap-2">
+                <i data-feather="activity" class="w-6 h-6"></i>
+                Doctor Dashboard
+            </h1>
+            <button id="navDocLogout" class="text-red-400 hover:text-red-300 flex items-center gap-2 transition-colors">
+                <i data-feather="log-out" class="w-4 h-4"></i> Logout
+            </button>
+        </header>
 
-    <div id="toast" class="hidden"></div>
-    <div id="approvalBanner" class="hidden mb-4 rounded border border-amber-300 bg-amber-50 text-amber-800 px-4 py-3 text-sm">
-      Your account is pending approval. Some actions are disabled.
+        <div id="toast" class="fixed top-4 right-4 hidden z-50 rounded-lg shadow-lg px-4 py-2 max-w-xs"></div>
+        
+        <div id="approvalBanner" class="hidden mb-4 rounded-lg border border-amber-500/50 bg-gradient-to-r from-amber-900/20 to-amber-900/10 text-amber-300 px-4 py-3 text-sm flex items-center gap-2">
+            <i data-feather="alert-triangle" class="w-4 h-4"></i>
+            Your account is pending approval. Some actions are disabled.
+        </div>
+
+        <section class="bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-lg border border-gray-700/50 overflow-hidden">
+            <div class="border-b border-gray-700/50">
+                <nav class="flex gap-6 px-4 pt-4">
+                    <button class="tab-btn pb-3 border-b-2 border-transparent text-gray-400 hover:text-emerald-300 transition-all" data-tab="profile">
+                        <i data-feather="user" class="w-4 h-4 mr-1"></i> Profile
+                    </button>
+                    <button class="tab-btn pb-3 border-b-2 border-transparent text-gray-400 hover:text-emerald-300 transition-all" data-tab="availability">
+                        <i data-feather="calendar" class="w-4 h-4 mr-1"></i> Availability
+                    </button>
+                    <button class="tab-btn pb-3 border-b-2 border-transparent text-gray-400 hover:text-emerald-300 transition-all" data-tab="appointments">
+                        <i data-feather="clock" class="w-4 h-4 mr-1"></i> Appointments
+                    </button>
+                </nav>
+            </div>
+
+            <div class="p-4 md:p-6">
+                <!-- Profile Tab -->
+                <div id="tab-profile" class="tab-content active">
+                    <div class="flex items-start gap-4">
+                        <div class="relative">
+                            <img src="https://api.dicebear.com/7.x/initials/svg?seed=DR" class="w-16 h-16 rounded-full border-2 border-emerald-500/30" alt="avatar">
+                            <div class="absolute -bottom-1 -right-1 bg-emerald-600 rounded-full p-1 border-2 border-gray-800">
+                                <i data-feather="check" class="w-3 h-3 text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <h2 id="doctorName" class="text-xl font-semibold text-emerald-400">Doctor</h2>
+                                <span id="approvalBadge" class="hidden text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-900/30 to-amber-800/20 text-amber-300 border border-amber-700/50">Pending</span>
+                            </div>
+                            <p id="doctorSpecialty" class="text-sm text-gray-400">—</p>
+                            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <div class="flex items-center gap-2"><i data-feather="mail" class="w-3 h-3 text-gray-500"></i> Email: <span id="doctorEmail" class="font-medium text-gray-300">—</span></div>
+                                <div class="flex items-center gap-2"><i data-feather="phone" class="w-3 h-3 text-gray-500"></i> Phone: <span id="doctorPhone" class="font-medium text-gray-300">—</span></div>
+                                <div class="flex items-center gap-2"><i data-feather="home" class="w-3 h-3 text-gray-500"></i> Hospital: <span id="doctorHospital" class="font-medium text-gray-300">—</span></div>
+                                <div class="flex items-center gap-2"><i data-feather="award" class="w-3 h-3 text-gray-500"></i> Experience: <span id="doctorExperience" class="font-medium text-gray-300">—</span></div>
+                            </div>
+                        </div>
+                        <button id="editProfileBtn" class="ml-auto text-emerald-400 hover:text-emerald-300 flex items-center gap-2 transition-colors">
+                            <i data-feather="edit-3" class="w-4 h-4"></i> Edit
+                        </button>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="rounded-xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-800/30 p-4 backdrop-blur-sm">
+                            <div class="text-xs text-gray-400">Total Appointments</div>
+                            <div id="statTotal" class="text-2xl font-bold text-emerald-400">—</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-800/30 p-4 backdrop-blur-sm">
+                            <div class="text-xs text-gray-400">Avg Rating</div>
+                            <div class="flex items-center gap-1">
+                                <div id="statAvgRating" class="text-2xl font-bold text-emerald-400">—</div>
+                                <i data-feather="star" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                        </div>
+                        <div class="rounded-xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-800/30 p-4 backdrop-blur-sm">
+                            <div class="text-xs text-gray-400">Show Rate</div>
+                            <div id="statShowRate" class="text-2xl font-bold text-emerald-400">—</div>
+                        </div>
+                        <div class="rounded-xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-800/30 p-4 backdrop-blur-sm">
+                            <div class="text-xs text-gray-400">Avg Wait</div>
+                            <div id="statWait" class="text-2xl font-bold text-emerald-400">—</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="font-semibold mb-2 text-emerald-400 flex items-center gap-2">
+                            <i data-feather="file-text" class="w-4 h-4"></i> Biography
+                        </h3>
+                        <p id="doctorBio" class="text-sm text-gray-300 leading-relaxed">—</p>
+                    </div>
+
+                    <div id="editFormWrap" class="hidden mt-6">
+                        <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-400">Email</label>
+                                <input id="fEmail" type="email" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Phone</label>
+                                <input id="fPhone" type="text" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Gender</label>
+                                <select id="fGender" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all">
+                                    <option value="">—</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400">Years of Experience</label>
+                                <input id="fExp" type="number" min="0" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all" />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-xs text-gray-400">Professional Bio</label>
+                                <textarea id="fBio" rows="4" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all"></textarea>
+                            </div>
+                            <div class="md:col-span-2 flex gap-3 mt-2">
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium shadow-md hover:shadow-emerald-500/20 transition-all">
+                                    Save Changes
+                                </button>
+                                <button type="button" id="cancelEditBtn" class="px-4 py-2 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Availability Tab -->
+                <div id="tab-availability" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2 bg-gray-800/30 rounded-xl border border-gray-700/50 p-4 backdrop-blur-sm">
+                            <h3 class="font-semibold mb-3 text-emerald-400 flex items-center gap-2">
+                                <i data-feather="plus-circle" class="w-4 h-4"></i> Add Availability
+                            </h3>
+                            <div id="dayButtons" class="flex flex-wrap gap-2 mb-4">
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Mon">Monday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Tue">Tuesday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Wed">Wednesday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Thu">Thursday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Fri">Friday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Sat">Saturday</button>
+                                <button type="button" class="day-btn px-3 py-1 rounded-lg border border-gray-600/50 hover:bg-gray-700/50 transition-colors" data-day="Sun">Sunday</button>
+                            </div>
+                            <div class="flex items-end gap-4">
+                                <div class="flex-1">
+                                    <label class="text-xs text-gray-400">Start Time</label>
+                                    <select id="startHour" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all">
+                                        <option value="08">8:00 AM</option>
+                                        <option value="09">9:00 AM</option>
+                                        <option value="10">10:00 AM</option>
+                                        <option value="11">11:00 AM</option>
+                                        <option value="12">12:00 PM</option>
+                                        <option value="13">1:00 PM</option>
+                                        <option value="14">2:00 PM</option>
+                                        <option value="15">3:00 PM</option>
+                                        <option value="16">4:00 PM</option>
+                                        <option value="17">5:00 PM</option>
+                                        <option value="18">6:00 PM</option>
+                                        <option value="19">7:00 PM</option>
+                                        <option value="20">8:00 PM</option>
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-xs text-gray-400">End Time</label>
+                                    <select id="endHour" class="w-full mt-1 rounded-lg border border-gray-600/50 bg-gray-700/50 text-gray-100 px-3 py-2 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none transition-all">
+                                        <option value="09">9:00 AM</option>
+                                        <option value="10">10:00 AM</option>
+                                        <option value="11">11:00 AM</option>
+                                        <option value="12">12:00 PM</option>
+                                        <option value="13">1:00 PM</option>
+                                        <option value="14">2:00 PM</option>
+                                        <option value="15">3:00 PM</option>
+                                        <option value="16">4:00 PM</option>
+                                        <option value="17">5:00 PM</option>
+                                        <option value="18">6:00 PM</option>
+                                        <option value="19">7:00 PM</option>
+                                        <option value="20">8:00 PM</option>
+                                        <option value="21">9:00 PM</option>
+                                    </select>
+                                </div>
+                                <button id="addAvailBtn" class="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium shadow-md hover:shadow-emerald-500/20 transition-all">
+                                    Add Slot
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800/30 rounded-xl border border-gray-700/50 p-4 backdrop-blur-sm">
+                            <h3 class="font-semibold mb-3 text-emerald-400 flex items-center gap-2">
+                                <i data-feather="calendar" class="w-4 h-4"></i> Current Availability
+                            </h3>
+                            <div id="availGrouped" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointments Tab -->
+                <div id="tab-appointments" class="tab-content">
+                    <div class="mb-6">
+                        <h3 class="font-semibold mb-3 text-emerald-400 flex items-center gap-2">
+                            <i data-feather="calendar" class="w-4 h-4"></i> Weekly Schedule
+                        </h3>
+                        <div id="apptSchedWrap" class="overflow-x-auto border border-gray-700/50 rounded-xl bg-gray-800/30 backdrop-blur-sm">
+                            <div class="grid grid-cols-[120px_1fr] min-w-max">
+                                <div class="sticky left-0 z-10 bg-gray-800/70 font-medium text-sm h-[var(--cell)] flex items-center justify-center border-b border-gray-700/50">Day/Time</div>
+                                <div class="hour-bg overflow-hidden border-b border-gray-700/50">
+                                    <div id="apptHourGrid" class="grid grid-cols-24 min-w-max">
+                                        <!-- Hours will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="apptRows" class="grid grid-cols-[120px_1fr] min-w-max"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-3 text-emerald-400 flex items-center gap-2">
+                            <i data-feather="list" class="w-4 h-4"></i> Upcoming Appointments
+                        </h3>
+                        <div id="apptsList" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <section class="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div class="border-b border-gray-200">
-        <nav class="flex gap-6 px-4 pt-4">
-          <button class="tab-btn pb-3 text-gray-500" data-tab="profile">Profile</button>
-          <button class="tab-btn pb-3 text-gray-500" data-tab="availability">Availability</button>
-          <button class="tab-btn pb-3 text-gray-500" data-tab="appointments">Appointments</button>
-        </nav>
-      </div>
+    <template id="hourLabelTpl">
+        <div class="h-[var(--cell)] w-[var(--cell)] flex items-center justify-center text-xs text-gray-400"></div>
+    </template>
 
-      <div class="p-4 md:p-6">
-        <!-- Profile Tab -->
-        <div id="tab-profile" class="tab-content active">
-          <div class="flex items-start gap-4">
-            <img src="https://api.dicebear.com/7.x/initials/svg?seed=DR" class="w-16 h-16 rounded-full border" alt="avatar">
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <h2 id="doctorName" class="text-xl font-semibold">Doctor</h2>
-                <span id="approvalBadge" class="hidden text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">Pending</span>
-              </div>
-              <p id="doctorSpecialty" class="text-sm text-gray-500">—</p>
-              <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                <div>Email: <span id="doctorEmail" class="font-medium">—</span></div>
-                <div>Phone: <span id="doctorPhone" class="font-medium">—</span></div>
-                <div>Hospital: <span id="doctorHospital" class="font-medium">—</span></div>
-                <div>Experience: <span id="doctorExperience" class="font-medium">—</span></div>
-              </div>
-            </div>
-            <button id="editProfileBtn" class="ml-auto text-blue-600 hover:text-blue-800 flex items-center gap-2"><i data-feather="edit-3" class="w-4 h-4"></i> Edit</button>
-          </div>
+    <script>
+        feather.replace();
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+        const tokenKey = 'doctorAccessToken';
 
-          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div class="rounded border border-gray-200 p-3 bg-gray-50"><div class="text-gray-500">Total Appointments</div><div id="statTotal" class="text-lg font-semibold">—</div></div>
-            <div class="rounded border border-gray-200 p-3 bg-gray-50"><div class="text-gray-500">Avg Rating</div><div id="statAvgRating" class="text-lg font-semibold">—</div></div>
-            <div class="rounded border border-gray-200 p-3 bg-gray-50"><div class="text-gray-500">Show Rate</div><div id="statShowRate" class="text-lg font-semibold">—</div></div>
-            <div class="rounded border border-gray-200 p-3 bg-gray-50"><div class="text-gray-500">Avg Wait (min)</div><div id="statWait" class="text-lg font-semibold">—</div></div>
-          </div>
+        // Toast notifications
+        function showToast(msg, type='info') {
+            const el = $('#toast');
+            el.textContent = msg;
+            el.className = 'hidden';
+            
+            const baseClasses = 'fixed top-4 right-4 z-50 rounded-lg shadow-lg px-4 py-2 max-w-xs flex items-start gap-2 transition-all duration-300';
+            const typeClasses = {
+                error: 'bg-red-900/80 text-red-100 border border-red-700/50',
+                success: 'bg-emerald-900/80 text-emerald-100 border border-emerald-700/50',
+                info: 'bg-blue-900/80 text-blue-100 border border-blue-700/50',
+                warning: 'bg-amber-900/80 text-amber-100 border border-amber-700/50'
+            };
+            
+            el.className = `${baseClasses} ${typeClasses[type] || typeClasses.info}`;
+            el.innerHTML = `<i data-feather="${type==='error'?'alert-triangle':type==='success'?'check-circle':type==='warning'?'alert-octagon':'info'}" class="w-4 h-4 mt-0.5"></i> ${msg}`;
+            feather.replace();
+            
+            el.classList.remove('hidden');
+            setTimeout(() => {
+                el.classList.add('opacity-0');
+                setTimeout(() => el.classList.add('hidden'), 300);
+            }, 3500);
+        }
 
-          <div class="mt-6">
-            <h3 class="font-semibold mb-2">Biography</h3>
-            <p id="doctorBio" class="text-sm text-gray-700">—</p>
-          </div>
+        function authHeader(){
+          const t = localStorage.getItem(tokenKey);
+          return { 'Authorization': 'Bearer ' + t };
+        }
 
-          <div id="editFormWrap" class="hidden mt-6">
-            <form id="editForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs text-gray-500">Email</label>
-                <input id="fEmail" type="email" class="w-full mt-1 rounded border border-gray-300 px-3 py-2" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Phone</label>
-                <input id="fPhone" type="text" class="w-full mt-1 rounded border border-gray-300 px-3 py-2" />
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Gender</label>
-                <select id="fGender" class="w-full mt-1 rounded border border-gray-300 px-3 py-2">
-                  <option value="">—</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label class="text-xs text-gray-500">Years of Experience</label>
-                <input id="fExp" type="number" min="0" class="w-full mt-1 rounded border border-gray-300 px-3 py-2" />
-              </div>
-              <div class="md:col-span-2">
-                <label class="text-xs text-gray-500">Professional Bio</label>
-                <textarea id="fBio" rows="4" class="w-full mt-1 rounded border border-gray-300 px-3 py-2"></textarea>
-              </div>
-              <div class="md:col-span-2 flex gap-3">
-                <button type="submit" class="px-4 py-2 rounded bg-blue-600 text-white">Save</button>
-                <button type="button" id="cancelEditBtn" class="px-4 py-2 rounded border border-gray-300">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        function requireAuth(){
+          const t = localStorage.getItem(tokenKey);
+          if(!t){ window.location.href='/doctor/login'; }
+          return !!t;
+        }
 
-        <!-- Availability Tab -->
-        <div id="tab-availability" class="tab-content">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="md:col-span-2">
-              <h3 class="font-semibold mb-2">Add Availability</h3>
-              <div id="dayButtons" class="flex flex-wrap gap-2 mb-3">
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Mon">Mon</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Tue">Tue</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Wed">Wed</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Thu">Thu</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Fri">Fri</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Sat">Sat</button>
-                <button type="button" class="day-btn px-3 py-1 rounded border" data-day="Sun">Sun</button>
-              </div>
-              <div class="flex items-center gap-3">
-                <div>
-                  <label class="text-xs text-gray-500">Start</label>
-                  <select id="startHour" class="mt-1 rounded border border-gray-300 px-3 py-2"></select>
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">End</label>
-                  <select id="endHour" class="mt-1 rounded border border-gray-300 px-3 py-2"></select>
-                </div>
-                <button id="addAvailBtn" class="mt-5 px-4 py-2 rounded bg-blue-600 text-white">Add</button>
-              </div>
-            </div>
-            <div>
-              <h3 class="font-semibold mb-2">Current Availability</h3>
-              <div id="availGrouped" class="space-y-2"></div>
-            </div>
-          </div>
-        </div>
+        async function apiGet(path){
+          try{
+            const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
+            if(r.status===401){ window.location.href='/doctor/login'; return null; }
+            if(r.status===403){ showToast('Access denied','error'); return null; }
+            if(r.status===422){ localStorage.removeItem(tokenKey); window.location.href='/doctor/login'; return null; }
+            return await r.json();
+          }catch(e){ showToast('Network error','error'); return null; }
+        }
 
-        <!-- Appointments Tab -->
-        <div id="tab-appointments" class="tab-content">
-          <div class="mb-4">
-            <h3 class="font-semibold mb-2">Schedule</h3>
-            <div id="apptSchedWrap" class="overflow-x-auto border border-gray-200 rounded">
-              <div class="grid grid-cols-[96px_1fr] bg-white">
-                <div class="sticky left-0 z-10 bg-white font-medium text-sm h-[var(--cell)] flex items-center justify-center">Day</div>
-                <div class="hour-bg overflow-hidden">
-                  <div id="apptHourGrid" class="grid"></div>
-                </div>
-              </div>
-              <div id="apptRows" class="grid grid-cols-[96px_1fr]"></div>
-            </div>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">Appointments</h3>
-            <div id="apptsList" class="divide-y divide-gray-100"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <template id="hourLabelTpl">
-    <div class="h-[var(--cell)] w-[var(--cell)] flex items-center justify-center text-[11px] text-gray-500"></div>
-  </template>
-
-  <script>
-    feather.replace();
-    const $ = (sel) => document.querySelector(sel);
-    const tokenKey = 'doctorAccessToken';
-    const errorClass = 'bg-red-50 text-red-800 border border-red-200';
-    const successClass = 'bg-green-50 text-green-800 border border-green-200';
-
-    function showToast(msg, type='info'){
-      const el = $('#toast');
-      el.textContent = msg;
-      el.className = '';
-      el.classList.add('mb-4','px-4','py-3','rounded','text-sm');
-      if(type==='error') el.classList.add(...errorClass.split(' '));
-      else if(type==='success') el.classList.add(...successClass.split(' '));
-      else el.classList.add('bg-gray-100','text-gray-800','border','border-gray-200');
-      el.classList.remove('hidden');
-      setTimeout(()=>{ el.classList.add('hidden'); }, 3500);
-    }
-
-    function authHeader(){
-      const t = localStorage.getItem(tokenKey);
-      return { 'Authorization': 'Bearer ' + t };
-    }
-
-    function requireAuth(){
-      const t = localStorage.getItem(tokenKey);
-      if(!t){ window.location.href='/doctor/login'; }
-      return !!t;
-    }
-
-    async function apiGet(path){
-      try{
-        const r = await fetch(`${window.location.origin}${path}`, { headers: { ...authHeader() } });
-        if(r.status===401){ window.location.href='/doctor/login'; return null; }
-        if(r.status===403){ showToast('Access denied','error'); return null; }
-        if(r.status===422){ localStorage.removeItem(tokenKey); window.location.href='/doctor/login'; return null; }
-        return await r.json();
-      }catch(e){ showToast('Network error','error'); return null; }
-    }
-
-    async function apiJson(method, path, body){
-      const r = await fetch(`${window.location.origin}${path}`, {
-        method,
-        headers: { 'Content-Type': 'application/json', ...authHeader() },
-        body: JSON.stringify(body||{})
-      });
-      if(r.status===401){ window.location.href='/doctor/login'; return null; }
-      if(r.status===403){ throw new Error('Access denied'); }
-      if(r.status===422){ localStorage.removeItem(tokenKey); window.location.href='/doctor/login'; return null; }
-      const data = await r.json().catch(()=>({}));
-      if(!r.ok){ throw new Error(data.message || 'Request failed'); }
-      return data;
-    }
-
-    function populateHourSelects(){
-      const sh = $('#startHour'); const eh = $('#endHour');
-      if(!sh || !eh) return;
-      const opts = Array.from({length:13}, (_,i)=> 8+i)
-        .map(h=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}:00</option>`).join('');
-      sh.innerHTML = '<option value="08">08:00</option>'+opts;
-      eh.innerHTML = opts;
-      sh.value='09'; eh.value='17';
-    }
-
-    function setApprovalUI(status){
-      const banner = $('#approvalBanner');
-      const badge = $('#approvalBadge');
-      const editBtn = $('#editProfileBtn');
-      const addBtn = $('#addAvailBtn');
-      const isApproved = (status==='approved');
-      if(!isApproved){
-        banner.classList.remove('hidden');
-        badge.classList.remove('hidden');
-        badge.textContent = status.charAt(0).toUpperCase()+status.slice(1);
-        editBtn.setAttribute('disabled','true');
-        if(addBtn) addBtn.setAttribute('disabled','true');
-      } else {
-        banner.classList.add('hidden');
-        badge.classList.add('hidden');
-        editBtn.removeAttribute('disabled');
-        if(addBtn) addBtn.removeAttribute('disabled');
-      }
-    }
-
-    function wireTabs(){
-      const btns = document.querySelectorAll('.tab-btn');
-      btns.forEach(b=>{
-        b.addEventListener('click',()=>{
-          btns.forEach(x=>{
-            x.classList.remove('border-blue-500','border-b-2','text-blue-600','font-semibold');
-            x.classList.add('text-gray-500');
-            x.style.textDecoration='';
+        async function apiJson(method, path, body){
+          const r = await fetch(`${window.location.origin}${path}`, {
+            method,
+            headers: { 'Content-Type': 'application/json', ...authHeader() },
+            body: JSON.stringify(body||{})
           });
-          b.classList.add('border-b-2','border-blue-500','text-blue-600','font-semibold');
-          b.classList.remove('text-gray-500');
-          const tab = b.getAttribute('data-tab');
-          document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-          const active = document.getElementById(`tab-${tab}`); if(active) active.classList.add('active');
+          if(r.status===401){ window.location.href='/doctor/login'; return null; }
+          if(r.status===403){ throw new Error('Access denied'); }
+          if(r.status===422){ localStorage.removeItem(tokenKey); window.location.href='/doctor/login'; return null; }
+          const data = await r.json().catch(()=>({}));
+          if(!r.ok){ throw new Error(data.message || 'Request failed'); }
+          return data;
+        }
+
+        // Tab switching functionality
+        function wireTabs() {
+            const btns = $$('.tab-btn');
+            btns.forEach(b => {
+                b.addEventListener('click', () => {
+                    btns.forEach(x => {
+                        x.classList.remove('border-emerald-500', 'text-emerald-400', 'font-semibold');
+                        x.classList.add('text-gray-400');
+                    });
+                    b.classList.add('border-emerald-500', 'text-emerald-400', 'font-semibold');
+                    const tab = b.dataset.tab;
+                    $$('.tab-content').forEach(c => c.classList.remove('active'));
+                    $(`#tab-${tab}`).classList.add('active');
+                    feather.replace();
+                });
+            });
+            if (btns.length) btns[0].click();
+        }
+
+        function populateHourSelects(){
+          const sh = $('#startHour'); const eh = $('#endHour');
+          if(!sh || !eh) return;
+          // Set defaults only (options exist in template)
+          sh.value = sh.querySelector('option[value="09"]') ? '09' : sh.value;
+          eh.value = eh.querySelector('option[value="17"]') ? '17' : eh.value;
+        }
+
+        function renderAvailabilityGrouped(rows){
+          const container = $('#availGrouped');
+          if(!container) return;
+          if(!rows || !rows.length){ container.innerHTML = '<p class="text-xs text-gray-400">No availability added yet.</p>'; return; }
+          const grouped = {};
+          rows.forEach(r=>{
+            const key = `${r.starttime}-${r.endtime}`;
+            (grouped[key] = grouped[key] || []).push(r.dayname);
+          });
+          const daySort = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          container.innerHTML = Object.entries(grouped).map(([range, days])=>{
+            const [st,en] = range.split('-');
+            const dsorted = days.sort((a,b)=> daySort.indexOf(a)-daySort.indexOf(b));
+            const dayBadges = dsorted.map(d=>`<span class="px-2 py-0.5 rounded-full bg-gray-700/30 border border-gray-600/50">${d}</span>`).join('');
+            return `<div class='rounded-lg border border-gray-700/50 bg-gray-800/50 p-3'>
+              <div class='flex items-center justify-between'>
+                <span class='text-sm font-medium text-emerald-400'>${st} - ${en}</span>
+                <button type='button' class='text-xs text-red-400 hover:text-red-300 transition-colors' data-range='${range}'>
+                  <i data-feather="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
+              <div class='mt-1 flex flex-wrap gap-1 text-xs text-gray-400'>${dayBadges}</div>
+            </div>`;
+          }).join('');
           feather.replace();
-        });
-      });
-      const firstBtn = document.querySelector('.tab-btn');
-      if(firstBtn){ firstBtn.classList.add('border-b-2','border-blue-500','text-blue-600','font-semibold'); }
-    }
-
-    function renderAvailabilityGrouped(rows){
-      const container = $('#availGrouped');
-      if(!container) return;
-      if(!rows || !rows.length){ container.innerHTML = '<p class="text-xs text-gray-400">None added yet.</p>'; return; }
-      const grouped = {};
-      rows.forEach(r=>{
-        const key = `${r.starttime}-${r.endtime}`;
-        (grouped[key] = grouped[key] || []).push(r.dayname);
-      });
-      const daySort = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      container.innerHTML = Object.entries(grouped).map(([range, days])=>{
-        const [st,en] = range.split('-');
-        const dsorted = days.sort((a,b)=> daySort.indexOf(a)-daySort.indexOf(b));
-        return `<div class='flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm'>
-          <div class='truncate'><span class='font-medium'>${dsorted.join(', ')}</span> <span class='text-gray-500 ml-1'>${st} - ${en}</span></div>
-          <button type='button' class='text-red-600 hover:text-red-800' data-range='${range}'>Remove</button>
-        </div>`;
-      }).join('');
-      // bind removals
-      container.querySelectorAll('button[data-range]').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          const [st,en] = btn.getAttribute('data-range').split('-');
-          const rows = await apiGet('/api/doctor/me/availability');
-          if(!rows) return;
-          const matches = rows.filter(r=> r.starttime===st && r.endtime===en);
-          for(const r of matches){
-            try{ await apiJson('DELETE','/api/doctor/me/availability',{ dayid: r.dayid }); }catch(e){ /* continue */ }
-          }
-          showToast('Availability removed','success');
-          await loadAvailability();
-        });
-      });
-    }
-
-    async function loadProfile(){
-      const data = await apiGet('/api/doctor/me');
-      if(!data) return;
-      const d = (data && data.doctor) ? data.doctor : {};
-      $('#doctorName').textContent = d.name || 'Doctor';
-      $('#doctorSpecialty').textContent = d.speciality || '—';
-      $('#doctorEmail').textContent = d.email || '—';
-      $('#doctorPhone').textContent = d.phone || '—';
-      $('#doctorHospital').textContent = (d.hospital&&d.hospital.name) || '—';
-      $('#doctorExperience').textContent = d.years_of_experience!=null ? `${d.years_of_experience} years experience` : '—';
-      $('#doctorBio').textContent = d.professional_bio || '—';
-      if(d.approval_status) setApprovalUI(d.approval_status);
-      if($('#fEmail')) $('#fEmail').value = d.email || '';
-      if($('#fPhone')) $('#fPhone').value = d.phone || '';
-      if($('#fGender')) $('#fGender').value = d.gender || '';
-      if($('#fExp')) $('#fExp').value = d.years_of_experience!=null ? d.years_of_experience : '';
-      if($('#fBio')) $('#fBio').value = d.professional_bio || '';
-      feather.replace();
-    }
-
-    async function loadStats(){
-      const s = await apiGet('/api/doctor/me/stats');
-      if(!s) return;
-      $('#statTotal').textContent = s.totalAppointments ?? '—';
-      $('#statAvgRating').textContent = s.avgRating!=null ? s.avgRating.toFixed(1) : '—';
-      $('#statShowRate').textContent = s.showRate!=null ? Math.round(s.showRate*100)+'%' : '—';
-      $('#statWait').textContent = s.avgWaitMins!=null ? s.avgWaitMins : '—';
-      feather.replace();
-    }
-
-    async function loadAvailability(){
-      const rows = await apiGet('/api/doctor/me/availability');
-      if(rows==null) return;
-      renderAvailabilityGrouped(rows);
-    }
-
-    async function getAvailInfo(){
-      const rows = await apiGet('/api/doctor/me/availability');
-      const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      if(!rows || !rows.length){
-        return { days: [], startMin: 8*60, endMin: 20*60, hasAvail: false };
-      }
-      const toMin = (t)=>{ const [h,m] = String(t).split(':').map(Number); return (h||0)*60 + (m||0); };
-      let startMin = Infinity, endMin = -Infinity;
-      const daySet = new Set();
-      rows.forEach(r=>{
-        daySet.add(r.dayname);
-        startMin = Math.min(startMin, toMin(r.starttime));
-        endMin = Math.max(endMin, toMin(r.endtime));
-      });
-      if(!Number.isFinite(startMin) || !Number.isFinite(endMin) || endMin<=startMin){
-        startMin = 8*60; endMin = 20*60;
-      }
-      const days = dayOrder.filter(d=> daySet.has(d));
-      return { days, startMin, endMin, hasAvail: true };
-    }
-
-    function renderApptSchedule(appts, avail){
-      const DAYS = avail.days;
-      const rangeMin = avail.startMin;
-      const rangeMax = avail.endMin;
-      const totalMin = Math.max(60, rangeMax - rangeMin);
-      const LABELS = {Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', Sun:'Sun'};
-      const COLORS  = ['indigo','sky','emerald','amber','rose','violet','cyan'];
-      const pct = (minutes)=> ((minutes - rangeMin) / totalMin) * 100;
-      const toMin = (t)=>{ if(!t) return 0; const [h,m] = String(t).split(':').map(Number); return h*60+m; };
-      const clamp = (m)=> Math.max(rangeMin, Math.min(rangeMin+totalMin, m));
-      const pretty = (t)=>{ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'PM':'AM'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
-      const dayKeyFrom = (dateStr)=>{ const d=new Date(dateStr); if(Number.isNaN(d.getTime())) return null; return d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3); };
-
-      const hourGrid = document.getElementById('apptHourGrid');
-      const hourTpl = document.getElementById('hourLabelTpl');
-      const headerHourBg = document.querySelector('#apptSchedWrap .grid > .hour-bg');
-      if(hourGrid){
-        hourGrid.innerHTML='';
-        const startHour = Math.floor(rangeMin/60);
-        const endHour = Math.ceil(rangeMax/60);
-        const count = Math.max(1, endHour - startHour);
-        hourGrid.style.gridTemplateColumns = `repeat(${count}, var(--cell))`;
-        if(headerHourBg){ headerHourBg.style.width = `calc(${count} * var(--cell))`; }
-        for(let h=startHour; h<endHour; h++){
-          const node = hourTpl.content.firstElementChild.cloneNode(true);
-          node.textContent = `${String(((h+11)%12)+1).padStart(2,'0')}:00`;
-          hourGrid.appendChild(node);
-        }
-      }
-
-      const rowsWrap = document.getElementById('apptRows');
-      if(!rowsWrap) return;
-      rowsWrap.innerHTML = '';
-      const rowsByDay = Object.fromEntries(DAYS.map(d=>[d,[]]));
-      (appts||[]).forEach(r=>{
-        if(r.status===false || String(r.status).toLowerCase()==='cancelled') return;
-        const dk = dayKeyFrom(r.appointment_date);
-        if(!dk) return;
-        const map = {Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat',Sun:'Sun'};
-        const key = map[dk] || null; if(!key) return;
-        if(!(key in rowsByDay)) return;
-        rowsByDay[key].push(r);
-      });
-
-      const now = new Date();
-      const todayShort = now.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
-      const nowMins = now.getHours()*60 + now.getMinutes();
-      const startHour = Math.floor(rangeMin/60);
-      const endHour = Math.ceil(rangeMax/60);
-      const count = Math.max(1, endHour - startHour);
-
-      DAYS.forEach((day, idx)=>{
-        const label = document.createElement('div');
-  label.className = 'sticky left-0 z-10 bg-white font-medium flex items-center justify-center text-sm';
-        label.style.height = 'var(--cell)';
-        if(todayShort.toLowerCase()===day.toLowerCase()) label.classList.add('text-blue-600');
-        label.textContent = LABELS[day];
-        rowsWrap.appendChild(label);
-
-        const cell = document.createElement('div');
-  cell.className = 'relative hour-bg';
-        cell.style.height = 'var(--cell)';
-        cell.style.width = `calc(${count} * var(--cell))`;
-
-        if(todayShort.toLowerCase()===day.toLowerCase() && nowMins>=rangeMin && nowMins<=rangeMin+totalMin){
-          const line = document.createElement('div');
-          line.className = 'absolute top-0 bottom-0 w-0.5 bg-rose-500/80';
-          line.style.left = pct(nowMins)+'%';
-          cell.appendChild(line);
-        }
-
-        rowsByDay[day].forEach((a,i)=>{
-          const s = clamp(toMin(a.appointment_time));
-          const e = s + 30; // default 30 mins
-          const chip = document.createElement('div');
-          const color = COLORS[(idx + i) % COLORS.length];
-          chip.className = `chip absolute top-1 h-8 px-2 flex items-center rounded-md border text-xs bg-${color}-500/15 border-${color}-400/60 text-${color}-800`;
-          chip.style.left = pct(s)+'%';
-          chip.style.width = (pct(e)-pct(s))+'%';
-          chip.innerHTML = `<span class="truncate">${pretty(a.appointment_time)}</span>`;
-          cell.appendChild(chip);
-        });
-
-        rowsWrap.appendChild(cell);
-      });
-    }
-
-    async function loadAppointments(){
-      const [rows, avail] = await Promise.all([
-        apiGet('/api/doctor/me/appointments?limit=100'),
-        getAvailInfo()
-      ]);
-      if(rows==null || !avail) return;
-      // If no availability, clear grid and show helper text
-      if(!avail.days.length){
-        const hourGrid = document.getElementById('apptHourGrid');
-        const rowsWrap = document.getElementById('apptRows');
-        if(hourGrid) hourGrid.innerHTML = '';
-        if(rowsWrap) rowsWrap.innerHTML = '';
-      } else {
-        renderApptSchedule(rows, avail);
-      }
-      const wrap = $('#apptsList');
-      if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-500">No appointments.</p>'; return; }
-      wrap.innerHTML = rows.map(r=>{
-        return `<div class="py-3 flex items-center justify-between">
-          <div class="text-sm text-gray-800"><span class="font-medium">${r.appointment_date}</span> at ${r.appointment_time}</div>
-          <div class="text-xs text-gray-500 truncate max-w-[60%]">${r.reason||''}</div>
-          <span class="ml-2 text-xs ${r.status?'text-green-700':'text-red-700'}">${r.status?'Scheduled':'Cancelled'}</span>
-        </div>`;
-      }).join('');
-    }
-
-    function wireEdit(){
-      const btn = $('#editProfileBtn');
-      const wrap = $('#editFormWrap');
-      const cancel = $('#cancelEditBtn');
-      btn.addEventListener('click',()=>{ wrap.classList.toggle('hidden'); });
-      cancel.addEventListener('click',()=>{ wrap.classList.add('hidden'); });
-      $('#editForm').addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        try{
-          const payload = {
-            email: $('#fEmail').value.trim(),
-            phone: $('#fPhone').value.trim(),
-            gender: $('#fGender').value || null,
-            years_of_experience: $('#fExp').value ? Number($('#fExp').value) : null,
-            professional_bio: $('#fBio').value.trim() || null
-          };
-          await apiJson('PATCH','/api/doctor/me', payload);
-          showToast('Profile updated','success');
-          wrap.classList.add('hidden');
-          await loadProfile();
-        }catch(e){ showToast(String(e.message||e),'error'); }
-      });
-    }
-
-    function wireAvailabilityAdd(){
-      const dayWrap = document.getElementById('dayButtons');
-      if(dayWrap){
-        dayWrap.querySelectorAll('.day-btn').forEach(btn=>{
-          btn.addEventListener('click',()=>{
-            const active = !btn.classList.contains('active-day');
-            btn.classList.toggle('active-day', active);
-            btn.classList.toggle('bg-blue-50', active);
-            btn.classList.toggle('border-blue-300', active);
+          // bind removals
+          container.querySelectorAll('button[data-range]').forEach(btn=>{
+            btn.addEventListener('click', async ()=>{
+              const [st,en] = btn.getAttribute('data-range').split('-');
+              const rows = await apiGet('/api/doctor/me/availability');
+              if(!rows) return;
+              const matches = rows.filter(r=> r.starttime===st && r.endtime===en);
+              for(const r of matches){
+                try{ await apiJson('DELETE','/api/doctor/me/availability',{ dayid: r.dayid }); }catch(e){ /* continue */ }
+              }
+              showToast('Availability removed','success');
+              await loadAvailability();
+              await loadAppointments();
+            });
           });
-        });
-      }
-      const add = $('#addAvailBtn');
-      if(!add) return;
-      add.addEventListener('click', async ()=>{
-        try{
-          const sh = $('#startHour').value;
-          const eh = $('#endHour').value;
-          if(!sh || !eh){ showToast('Select start and end hours','error'); return; }
-          const start = `${sh}:00`;
-          const end = `${eh}:00`;
-          if(start >= end){ showToast('End hour must be after start','error'); return; }
-          const days = Array.from(document.querySelectorAll('#dayButtons .day-btn.active-day')).map(b=>b.getAttribute('data-day'));
-          if(!days.length){ showToast('Select at least one day','error'); return; }
-          const existing = await apiGet('/api/doctor/me/availability');
-          const existingDays = new Set((existing||[]).map(r=> r.dayname));
-          const conflict = days.some(d=> existingDays.has(d));
-          if(conflict){ showToast('One or more selected days already added','error'); return; }
-          for(const d of days){
-            await apiJson('POST','/api/doctor/me/availability',{ dayname: d, starttime: start, endtime: end });
+        }
+
+        async function loadProfile(){
+          const data = await apiGet('/api/doctor/me');
+          if(!data) return;
+          const d = (data && data.doctor) ? data.doctor : {};
+          $('#doctorName').textContent = d.name || 'Doctor';
+          $('#doctorSpecialty').textContent = d.speciality || '—';
+          $('#doctorEmail').textContent = d.email || '—';
+          $('#doctorPhone').textContent = d.phone || '—';
+          $('#doctorHospital').textContent = (d.hospital&&d.hospital.name) || '—';
+          $('#doctorExperience').textContent = d.years_of_experience!=null ? `${d.years_of_experience} years` : '—';
+          $('#doctorBio').textContent = d.professional_bio || '—';
+          if(d.approval_status) setApprovalUI(d.approval_status);
+          if($('#fEmail')) $('#fEmail').value = d.email || '';
+          if($('#fPhone')) $('#fPhone').value = d.phone || '';
+          if($('#fGender')) $('#fGender').value = d.gender || '';
+          if($('#fExp')) $('#fExp').value = d.years_of_experience!=null ? d.years_of_experience : '';
+          if($('#fBio')) $('#fBio').value = d.professional_bio || '';
+          feather.replace();
+        }
+
+        async function loadStats(){
+          const s = await apiGet('/api/doctor/me/stats');
+          if(!s) return;
+          $('#statTotal').textContent = s.totalAppointments ?? '—';
+          $('#statAvgRating').textContent = s.avgRating!=null ? s.avgRating.toFixed(1) : '—';
+          $('#statShowRate').textContent = s.showRate!=null ? Math.round(s.showRate*100)+'%' : '—';
+          $('#statWait').textContent = s.avgWaitMins!=null ? `${s.avgWaitMins} min` : '—';
+          feather.replace();
+        }
+
+        async function loadAvailability(){
+          const rows = await apiGet('/api/doctor/me/availability');
+          if(rows==null) return;
+          renderAvailabilityGrouped(rows);
+        }
+
+        async function getAvailInfo(){
+          const rows = await apiGet('/api/doctor/me/availability');
+          const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+          if(!rows || !rows.length){
+            return { days: [], startMin: 8*60, endMin: 20*60, hasAvail: false };
           }
-          showToast('Availability added','success');
-          document.querySelectorAll('#dayButtons .day-btn.active-day').forEach(b=>b.classList.remove('active-day'));
-          await loadAvailability();
-          await loadAppointments();
-        }catch(e){ showToast(String(e.message||e),'error'); }
-      });
-    }
+          const toMin = (t)=>{ const [h,m] = String(t).split(':').map(Number); return (h||0)*60 + (m||0); };
+          let startMin = Infinity, endMin = -Infinity;
+          const daySet = new Set();
+          rows.forEach(r=>{
+            daySet.add(r.dayname);
+            startMin = Math.min(startMin, toMin(r.starttime));
+            endMin = Math.max(endMin, toMin(r.endtime));
+          });
+          if(!Number.isFinite(startMin) || !Number.isFinite(endMin) || endMin<=startMin){
+            startMin = 8*60; endMin = 20*60;
+          }
+          const days = dayOrder.filter(d=> daySet.has(d));
+          return { days, startMin, endMin, hasAvail: true };
+        }
 
-    function wireLogout(){
-      const btn = $('#navDocLogout');
-      if(!btn) return;
-      btn.addEventListener('click', ()=>{
-        localStorage.removeItem(tokenKey);
-        localStorage.removeItem('doctorLoggedIn');
-        localStorage.removeItem('doctorId');
-        localStorage.removeItem('doctorName');
-        window.location.href = '/doctor/login';
-      });
-    }
+        function renderApptSchedule(appts, avail){
+          const DAYS = avail.days;
+          const rangeMin = avail.startMin;
+          const rangeMax = avail.endMin;
+          const totalMin = Math.max(60, rangeMax - rangeMin);
+          const LABELS = {Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', Sun:'Sun'};
+          const pct = (minutes)=> ((minutes - rangeMin) / totalMin) * 100;
+          const toMin = (t)=>{ if(!t) return 0; const [h,m] = String(t).split(':').map(Number); return h*60+m; };
+          const clamp = (m)=> Math.max(rangeMin, Math.min(rangeMin+totalMin, m));
+          const pretty = (t)=>{ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'PM':'AM'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
+          const dayKeyFrom = (dateStr)=>{ const d=new Date(dateStr); if(Number.isNaN(d.getTime())) return null; return d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3); };
 
-    (async function init(){
-      if(!requireAuth()) return;
-      wireTabs();
-      wireEdit();
-      wireAvailabilityAdd();
-      wireLogout();
-      populateHourSelects();
-      await Promise.all([loadProfile(), loadStats()]);
-      await loadAvailability();
-      await loadAppointments();
-      feather.replace();
-    })();
-  </script>
+          const hourGrid = document.getElementById('apptHourGrid');
+          const hourTpl = document.getElementById('hourLabelTpl');
+          const headerHourBg = document.querySelector('#apptSchedWrap .grid > .hour-bg');
+          if(hourGrid){
+            hourGrid.innerHTML='';
+            const startHour = Math.floor(rangeMin/60);
+            const endHour = Math.ceil(rangeMax/60);
+            const count = Math.max(1, endHour - startHour);
+            hourGrid.style.gridTemplateColumns = `repeat(${count}, var(--cell))`;
+            if(headerHourBg){ headerHourBg.style.width = `calc(${count} * var(--cell))`; }
+            for(let h=startHour; h<endHour; h++){
+              const node = hourTpl.content.firstElementChild.cloneNode(true);
+              node.textContent = `${String(((h+11)%12)+1).padStart(2,'0')}:00`;
+              hourGrid.appendChild(node);
+            }
+          }
+
+          const rowsWrap = document.getElementById('apptRows');
+          if(!rowsWrap) return;
+          rowsWrap.innerHTML = '';
+          const rowsByDay = Object.fromEntries(DAYS.map(d=>[d,[]]));
+          (appts||[]).forEach(r=>{
+            if(r.status===false || String(r.status).toLowerCase()==='cancelled') return;
+            const dk = dayKeyFrom(r.appointment_date);
+            if(!dk) return;
+            const map = {Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat',Sun:'Sun'};
+            const key = map[dk] || null; if(!key) return;
+            if(!(key in rowsByDay)) return;
+            rowsByDay[key].push(r);
+          });
+
+          const now = new Date();
+          const todayShort = now.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3);
+          const nowMins = now.getHours()*60 + now.getMinutes();
+          const startHour = Math.floor(rangeMin/60);
+          const endHour = Math.ceil(rangeMax/60);
+          const count = Math.max(1, endHour - startHour);
+
+          // Color palette for chips (inline styles to avoid Tailwind JIT issues with dynamic classes)
+          const palette = [
+            {bg:'rgba(16,185,129,0.15)', border:'rgba(16,185,129,0.6)', text:'#10B981'}, // emerald
+            {bg:'rgba(59,130,246,0.15)', border:'rgba(59,130,246,0.6)', text:'#3B82F6'}, // blue
+            {bg:'rgba(236,72,153,0.15)', border:'rgba(236,72,153,0.6)', text:'#EC4899'}, // pink
+            {bg:'rgba(245,158,11,0.15)', border:'rgba(245,158,11,0.6)', text:'#F59E0B'}, // amber
+            {bg:'rgba(99,102,241,0.15)', border:'rgba(99,102,241,0.6)', text:'#6366F1'}, // indigo
+            {bg:'rgba(14,165,233,0.15)', border:'rgba(14,165,233,0.6)', text:'#0EA5E9'}, // sky
+            {bg:'rgba(244,63,94,0.15)', border:'rgba(244,63,94,0.6)', text:'#F43F5E'},  // rose
+          ];
+
+          DAYS.forEach((day, idx)=>{
+            const label = document.createElement('div');
+            label.className = 'sticky left-0 z-10 bg-gray-800/70 font-medium flex items-center justify-center text-sm text-gray-200 border-b border-gray-700/50';
+            label.style.height = 'var(--cell)';
+            if(todayShort.toLowerCase()===day.toLowerCase()) label.classList.add('text-emerald-400');
+            label.textContent = LABELS[day];
+            rowsWrap.appendChild(label);
+
+            const cell = document.createElement('div');
+            cell.className = 'relative hour-bg border-b border-gray-700/50';
+            cell.style.height = 'var(--cell)';
+            cell.style.width = `calc(${count} * var(--cell))`;
+
+            if(todayShort.toLowerCase()===day.toLowerCase() && nowMins>=rangeMin && nowMins<=rangeMin+totalMin){
+              const line = document.createElement('div');
+              line.className = 'absolute top-0 bottom-0 w-0.5';
+              line.style.backgroundColor = 'rgba(244,63,94,0.85)';
+              line.style.left = pct(nowMins)+'%';
+              cell.appendChild(line);
+            }
+
+            rowsByDay[day].forEach((a,i)=>{
+              const s = clamp(toMin(a.appointment_time));
+              const e = s + 30; // default 30 mins
+              const chip = document.createElement('div');
+              const col = palette[(idx + i) % palette.length];
+              chip.className = 'chip absolute top-1 h-8 px-2 flex items-center rounded-md border text-xs';
+              chip.style.left = pct(s)+'%';
+              chip.style.width = (pct(e)-pct(s))+'%';
+              chip.style.backgroundColor = col.bg;
+              chip.style.borderColor = col.border;
+              chip.style.color = col.text;
+              chip.innerHTML = `<span class="truncate">${pretty(a.appointment_time)}</span>`;
+              cell.appendChild(chip);
+            });
+
+            rowsWrap.appendChild(cell);
+          });
+        }
+
+        async function loadAppointments(){
+          const [rows, avail] = await Promise.all([
+            apiGet('/api/doctor/me/appointments?limit=100'),
+            getAvailInfo()
+          ]);
+          if(rows==null || !avail) return;
+          // If no availability, clear grid
+          const hourGrid = document.getElementById('apptHourGrid');
+          const rowsWrap = document.getElementById('apptRows');
+          if(!avail.days.length){
+            if(hourGrid) hourGrid.innerHTML = '';
+            if(rowsWrap) rowsWrap.innerHTML = '';
+          } else {
+            renderApptSchedule(rows, avail);
+          }
+
+          const wrap = $('#apptsList');
+          if(!wrap) return;
+          if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-400">No appointments.</p>'; return; }
+          wrap.innerHTML = rows.map(r=>{
+            const statusOk = !!r.status;
+            const badge = statusOk
+              ? '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-900/20 text-emerald-300 border border-emerald-700/50">Confirmed</span>'
+              : '<span class="text-xs px-2 py-0.5 rounded-full bg-rose-900/20 text-rose-300 border border-rose-700/50">Cancelled</span>';
+            return `<div class="rounded-xl border border-gray-700/50 bg-gray-800/30 p-4 backdrop-blur-sm">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2">${badge}</div>
+                  <div class="text-sm text-gray-400 mt-1">${(r.reason||'') || ''}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-medium">${r.appointment_date||''}</div>
+                  <div class="text-xs text-gray-400">${r.appointment_time||''}</div>
+                </div>
+              </div>
+            </div>`;
+          }).join('');
+          feather.replace();
+        }
+
+        function wireEdit(){
+          const btn = $('#editProfileBtn');
+          const wrap = $('#editFormWrap');
+          const cancel = $('#cancelEditBtn');
+          if(btn) btn.addEventListener('click',()=>{ wrap.classList.toggle('hidden'); });
+          if(cancel) cancel.addEventListener('click',()=>{ wrap.classList.add('hidden'); });
+          const form = $('#editForm');
+          if(!form) return;
+          form.addEventListener('submit', async (e)=>{
+            e.preventDefault();
+            try{
+              const payload = {
+                email: $('#fEmail').value.trim(),
+                phone: $('#fPhone').value.trim(),
+                gender: $('#fGender').value || null,
+                years_of_experience: $('#fExp').value ? Number($('#fExp').value) : null,
+                professional_bio: $('#fBio').value.trim() || null
+              };
+              await apiJson('PATCH','/api/doctor/me', payload);
+              showToast('Profile updated','success');
+              wrap.classList.add('hidden');
+              await loadProfile();
+            }catch(e){ showToast(String(e.message||e),'error'); }
+          });
+        }
+
+        function wireAvailabilityAdd(){
+          const dayWrap = document.getElementById('dayButtons');
+          if(dayWrap){
+            dayWrap.querySelectorAll('.day-btn').forEach(btn=>{
+              btn.addEventListener('click',()=>{
+                const active = !btn.classList.contains('active-day');
+                btn.classList.toggle('active-day', active);
+                btn.classList.toggle('bg-emerald-900/20', active);
+                btn.classList.toggle('border-emerald-700/50', active);
+                btn.classList.toggle('text-emerald-300', active);
+              });
+            });
+          }
+          const add = $('#addAvailBtn');
+          if(!add) return;
+          add.addEventListener('click', async ()=>{
+            try{
+              const sh = $('#startHour').value;
+              const eh = $('#endHour').value;
+              if(!sh || !eh){ showToast('Select start and end hours','error'); return; }
+              const start = `${sh}:00`;
+              const end = `${eh}:00`;
+              if(start >= end){ showToast('End hour must be after start','error'); return; }
+              const days = Array.from(document.querySelectorAll('#dayButtons .day-btn.active-day')).map(b=>b.getAttribute('data-day'));
+              if(!days.length){ showToast('Select at least one day','error'); return; }
+              const existing = await apiGet('/api/doctor/me/availability');
+              const existingDays = new Set((existing||[]).map(r=> r.dayname));
+              const conflict = days.some(d=> existingDays.has(d));
+              if(conflict){ showToast('One or more selected days already added','error'); return; }
+              for(const d of days){
+                await apiJson('POST','/api/doctor/me/availability',{ dayname: d, starttime: start, endtime: end });
+              }
+              showToast('Availability added','success');
+              document.querySelectorAll('#dayButtons .day-btn.active-day').forEach(b=>b.classList.remove('active-day','bg-emerald-900/20','border-emerald-700/50','text-emerald-300'));
+              await loadAvailability();
+              await loadAppointments();
+            }catch(e){ showToast(String(e.message||e),'error'); }
+          });
+        }
+
+        function wireLogout(){
+          const btn = $('#navDocLogout');
+          if(!btn) return;
+          btn.addEventListener('click', ()=>{
+            localStorage.removeItem(tokenKey);
+            localStorage.removeItem('doctorLoggedIn');
+            localStorage.removeItem('doctorId');
+            localStorage.removeItem('doctorName');
+            window.location.href = '/doctor/login';
+          });
+        }
+
+        function setApprovalUI(status) {
+            const banner = $('#approvalBanner');
+            const badge = $('#approvalBadge');
+            const editBtn = $('#editProfileBtn');
+            const addBtn = $('#addAvailBtn');
+            
+            if (status !== 'approved') {
+                banner.classList.remove('hidden');
+                badge.classList.remove('hidden');
+                badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                if(editBtn) editBtn.setAttribute('disabled', 'true');
+                if (addBtn) addBtn.setAttribute('disabled', 'true');
+            } else {
+                banner.classList.add('hidden');
+                badge.classList.add('hidden');
+                if(editBtn) editBtn.removeAttribute('disabled');
+                if (addBtn) addBtn.removeAttribute('disabled');
+            }
+        }
+
+        async function init() {
+            if(!requireAuth()) return;
+            wireTabs();
+            wireEdit();
+            wireAvailabilityAdd();
+            wireLogout();
+            populateHourSelects();
+            await Promise.all([loadProfile(), loadStats()]);
+            await loadAvailability();
+            await loadAppointments();
+            feather.replace();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
