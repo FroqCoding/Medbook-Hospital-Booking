@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run smoke test locally",
+			"type": "shell",
+			"command": "F:/Medbook/.venv/Scripts/python.exe",
+			"args": [
+				"smoke_test.py",
+				"--base",
+				"http://127.0.0.1:5000"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "test"
+		}
+	]
+}
