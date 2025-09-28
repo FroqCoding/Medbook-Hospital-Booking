@@ -452,7 +452,7 @@
           const pct = (minutes)=> ((minutes - rangeMin) / totalMin) * 100;
           const toMin = (t)=>{ if(!t) return 0; const [h,m] = String(t).split(':').map(Number); return h*60+m; };
           const clamp = (m)=> Math.max(rangeMin, Math.min(rangeMin+totalMin, m));
-          const pretty = (t)=>{ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'PM':'AM'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
+          const pretty = (t)=>{ const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'P.M.':'A.M.'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
           const dayKeyFrom = (dateStr)=>{ const d=new Date(dateStr); if(Number.isNaN(d.getTime())) return null; return d.toLocaleDateString('en-GB',{weekday:'short'}).slice(0,3); };
 
           const hourGrid = document.getElementById('apptHourGrid');
@@ -467,7 +467,9 @@
             if(headerHourBg){ headerHourBg.style.width = `calc(${count} * var(--cell))`; }
             for(let h=startHour; h<endHour; h++){
               const node = hourTpl.content.firstElementChild.cloneNode(true);
-              node.textContent = `${String(((h+11)%12)+1).padStart(2,'0')}:00`;
+              const hr12 = ((h+11)%12)+1;
+              const ampm = h>=12 ? 'P.M.' : 'A.M.';
+              node.textContent = `${String(hr12).padStart(2,'0')}:00 ${ampm}`;
               hourGrid.appendChild(node);
             }
           }
@@ -536,7 +538,10 @@
               chip.style.backgroundColor = col.bg;
               chip.style.borderColor = col.border;
               chip.style.color = col.text;
-              chip.innerHTML = `<span class="truncate">${pretty(a.appointment_time)}</span>`;
+              // Show a minimal letter on the chip and provide a hover tooltip with details
+              chip.textContent = 'A';
+              const patient = a.patient_name || a.patient || a.name || 'Appointment';
+              chip.title = `${patient} — ${pretty(a.appointment_time)}`;
               cell.appendChild(chip);
             });
 
@@ -563,6 +568,7 @@
           const wrap = $('#apptsList');
           if(!wrap) return;
           if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-400">No appointments.</p>'; return; }
+          const fmt = (t)=>{ if(!t) return ''; const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'P.M.':'A.M.'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
           wrap.innerHTML = rows.map(r=>{
             const statusOk = !!r.status;
             const badge = statusOk
@@ -576,7 +582,7 @@
                 </div>
                 <div class="text-right">
                   <div class="text-sm font-medium">${r.appointment_date||''}</div>
-                  <div class="text-xs text-gray-400">${r.appointment_time||''}</div>
+                  <div class="text-xs text-gray-400">${fmt(r.appointment_time)||''}</div>
                 </div>
               </div>
             </div>`;
