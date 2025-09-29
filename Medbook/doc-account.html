@@ -255,7 +255,9 @@
         feather.replace();
         const $ = (sel) => document.querySelector(sel);
         const $$ = (sel) => document.querySelectorAll(sel);
-        const tokenKey = 'doctorAccessToken';
+  const tokenKey = 'doctorAccessToken';
+  // Toggle to show the red "now" line on the schedule; disabled per user request
+  const SHOW_NOW_LINE = false;
 
         // Toast notifications
         function showToast(msg, type='info') {
@@ -519,7 +521,7 @@
             cell.style.height = 'var(--cell)';
             cell.style.width = `calc(${count} * var(--cell))`;
 
-            if(todayShort.toLowerCase()===day.toLowerCase() && nowMins>=rangeMin && nowMins<=rangeMin+totalMin){
+            if(SHOW_NOW_LINE && todayShort.toLowerCase()===day.toLowerCase() && nowMins>=rangeMin && nowMins<=rangeMin+totalMin){
               const line = document.createElement('div');
               line.className = 'absolute top-0 bottom-0 w-0.5';
               line.style.backgroundColor = 'rgba(244,63,94,0.85)';
@@ -574,11 +576,13 @@
             const badge = statusOk
               ? '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-900/20 text-emerald-300 border border-emerald-700/50">Confirmed</span>'
               : '<span class="text-xs px-2 py-0.5 rounded-full bg-rose-900/20 text-rose-300 border border-rose-700/50">Cancelled</span>';
+            const patient = r.patient_name || r.patient || r.name || 'Patient';
             return `<div class="rounded-xl border border-gray-700/50 bg-gray-800/30 p-4 backdrop-blur-sm">
               <div class="flex items-start justify-between">
                 <div>
                   <div class="flex items-center gap-2">${badge}</div>
-                  <div class="text-sm text-gray-400 mt-1">${(r.reason||'') || ''}</div>
+                  <div class="mt-1 text-sm font-medium text-gray-200">${patient}</div>
+                  <div class="text-sm text-gray-400 mt-0.5">${(r.reason||'Unstated')}</div>
                 </div>
                 <div class="text-right">
                   <div class="text-sm font-medium">${r.appointment_date||''}</div>
