@@ -557,6 +557,28 @@
             getAvailInfo()
           ]);
           if(rows==null || !avail) return;
+          // Helpers for datetime comparisons
+          const toApptDate = (r)=>{
+            if(!r || !r.appointment_date) return null;
+            const t = r.appointment_time ? String(r.appointment_time).slice(0,5) : '00:00';
+            const d = new Date(`${r.appointment_date}T${t}`);
+            return Number.isNaN(d.getTime()) ? null : d;
+          };
+          const now = new Date();
+          const startOfWeek = (d)=>{
+            const x = new Date(d);
+            const day = x.getDay(); // 0=Sun..6=Sat
+            const diff = (day + 6) % 7; // days since Monday
+            x.setDate(x.getDate() - diff);
+            x.setHours(0,0,0,0);
+            return x;
+          };
+          const sw = startOfWeek(now);
+          const ew = new Date(sw); ew.setDate(sw.getDate()+7);
+          // Upcoming list = future appointments only (>= now)
+          const futureRows = (rows||[]).filter(r=>{ const dt = toApptDate(r); return dt && dt >= now; });
+          // Schedule grid = only appointments within the current week
+          const weekRows = (rows||[]).filter(r=>{ const dt = toApptDate(r); return dt && dt >= sw && dt < ew; });
           // If no availability, clear grid
           const hourGrid = document.getElementById('apptHourGrid');
           const rowsWrap = document.getElementById('apptRows');
@@ -564,14 +586,14 @@
             if(hourGrid) hourGrid.innerHTML = '';
             if(rowsWrap) rowsWrap.innerHTML = '';
           } else {
-            renderApptSchedule(rows, avail);
+            renderApptSchedule(weekRows, avail);
           }
 
           const wrap = $('#apptsList');
           if(!wrap) return;
-          if(!rows.length){ wrap.innerHTML = '<p class="text-sm text-gray-400">No appointments.</p>'; return; }
+          if(!futureRows.length){ wrap.innerHTML = '<p class="text-sm text-gray-400">No upcoming appointments.</p>'; return; }
           const fmt = (t)=>{ if(!t) return ''; const [hh,mm] = String(t).split(':'); const h=+hh, m=+mm; const ampm = h>=12?'P.M.':'A.M.'; const hr=((h+11)%12)+1; return `${hr}:${String(m).padStart(2,'0')} ${ampm}`; };
-          wrap.innerHTML = rows.map(r=>{
+          wrap.innerHTML = futureRows.map(r=>{
             const statusOk = !!r.status;
             const badge = statusOk
               ? '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-900/20 text-emerald-300 border border-emerald-700/50">Confirmed</span>'
